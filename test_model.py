@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 import pytest
 
-from model import Batch, NotAvailableError, OrderLine
+from model import Batch, OrderLine
 
 today = date.today()
 tomorrow = today + timedelta(days=1)
@@ -15,7 +15,7 @@ def make_batch_and_line(sku: str, batch_qty: int, line_qty: int):
 
 
 def test_allocating_to_a_batch_reduces_the_available_quantity():
-    batch, line = make_batch_and_line()
+    batch, line = make_batch_and_line("SMALL_TABLE", 20, 2)
 
     batch.allocate(line)
 

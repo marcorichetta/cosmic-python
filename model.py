@@ -13,7 +13,7 @@ class Product:
     sku: str
 
 
-@dataclass
+@dataclass(frozen=True)
 class OrderLine:
     order_reference: str
     sku: str
