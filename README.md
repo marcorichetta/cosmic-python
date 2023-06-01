@@ -3,24 +3,21 @@
 ## Chapters
 
 Each chapter has its own branch which contains all the commits for that chapter,
-so it has the state that corresponds to the _end_ of that chapter.  If you want
+so it has the state that corresponds to the _end_ of that chapter. If you want
 to try and code along with a chapter, you'll want to check out the branch for the
 previous chapter.
 
 https://github.com/python-leap/code/branches/all
 
-
 ## Exercises
 
-Branches for the exercises follow the convention `{chatper_name}_exercise`, eg 
+Branches for the exercises follow the convention `{chatper_name}_exercise`, eg
 https://github.com/python-leap/code/tree/chapter_04_service_layer_exercise
-
 
 ## Requirements
 
-* docker with docker-compose
-* for chapters 1 and 2, and optionally for the rest: a local python3.7 virtualenv
-
+-   docker with docker-compose
+-   for chapters 1 and 2, and optionally for the rest: a local python3.7 virtualenv
 
 ## Building the containers
 
@@ -39,7 +36,7 @@ make all # builds, brings containers up, runs tests
 python3.8 -m venv .venv && source .venv/bin/activate # or however you like to create virtualenvs
 
 # for chapter 1
-pip install pytest 
+pip install pytest
 
 # for chapter 2
 pip install pytest sqlalchemy
@@ -53,7 +50,6 @@ pip install -e src/
 ```
 
 <!-- TODO: use a make pipinstall command -->
-
 
 ## Running the tests
 
@@ -73,4 +69,3 @@ pytest tests/e2e
 ## Makefile
 
 There are more useful commands in the makefile, have a look and try them out.
-
