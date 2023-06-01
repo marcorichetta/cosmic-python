@@ -17,25 +17,32 @@ class Product:
 class OrderLine:
     order_reference: str
     sku: str
-    quantity: Decimal
+    quantity: int
 
 
-@dataclass
 class Batch:
-    reference: str
-    sku: str
-    quantity: Decimal
-    eta: Optional[date]
+    def __init__(self, reference: str, sku: str, quantity: int, eta: Optional[date]):
+        self.reference = reference
+        self.sku = sku
+        self.eta = eta
+        self._purchased_quantity = quantity
+        self._allocations = set()
+
+    def allocate(self, line: OrderLine) -> None:
+        if self.can_allocate(line):
+            self._allocations.add(line)
+
+    def deallocate(self, line: OrderLine) -> None:
+        if line in self._allocations:
+            self._allocations.remove(line)
 
     def can_allocate(self, line: OrderLine) -> bool:
         return self.sku == line.sku and self.available_quantity >= line.quantity
 
-    def allocate(self, line: OrderLine) -> None:
-        self.quantity -= line.quantity
-
-        if self.quantity < 0:
-            raise NotAvailableError
+    @property
+    def allocated_quantity(self) -> int:
+        return sum(line.quantity for line in self._allocations)
 
     @property
     def available_quantity(self) -> int:
-        return self.quantity
+        return self._purchased_quantity - self.allocated_quantity
