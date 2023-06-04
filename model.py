@@ -20,7 +20,7 @@ uniquely identified by the data it holds; we usually make them immutable:
 """
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class OrderLine:
     order_reference: str
     sku: str
