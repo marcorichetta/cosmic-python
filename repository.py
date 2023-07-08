@@ -35,4 +35,24 @@ class SqlRepository(AbstractRepository):
             dict(reference=reference),
         )
 
-        return model.Batch(reference, sku, _purchased_quantity, eta)
+        batch = model.Batch(reference, sku, _purchased_quantity, eta)
+
+        for line in self._get_order_lines(reference):
+            batch.allocate(line)
+
+        return batch
+
+    def _get_order_lines(self, reference) -> list[model.OrderLine]:
+        rows = list(
+            self.session.execute(
+                "SELECT orderid, order_lines.sku, order_lines.qty"
+                " FROM allocations"
+                " JOIN order_lines ON allocations.orderline_id = order_lines.id"
+                " JOIN batches ON allocations.batch_id = batches.id"
+                " WHERE batches.reference = :batchid",
+                dict(batchid=reference),
+            )
+        )
+
+        order_lines = [model.OrderLine(*row) for row in rows]
+        return order_lines
