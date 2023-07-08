@@ -30,5 +30,9 @@ class SqlRepository(AbstractRepository):
         self.session.execute(query)
 
     def get(self, reference) -> model.Batch:
-        # self.session.execute('SELECT ??
-        ...
+        [[sku, _purchased_quantity, eta]] = self.session.execute(
+            "SELECT sku, _purchased_quantity, eta FROM batches WHERE reference=:reference",
+            dict(reference=reference),
+        )
+
+        return model.Batch(reference, sku, _purchased_quantity, eta)
