@@ -3,16 +3,25 @@
 Este repo contiene ejercicios/comentarios/etc que acompañan al libro https://www.cosmicpython.com
 
 El repo incluye branches por cada capítulo pero yo tomé otro approach.
+
 1. Empecé con la rama `chapter_01_domain_model_exercise`
 1. Al finalizar con ese chapter, taggeo el commit `git tag -a 0.1 -m "Ch 01 - Domain modeling"`
 1. Sigo trabajando en la misma rama y a medida que avanzo mergeo las ramas de los otros capítulos
+    ```bash
+    > git status
+    ... branch chapter_01_domain_model_exercise
+    > git merge chapter_0x
+    ```
 
 ## Notas
+
 Mis notas en [Notion](https://marcorichetta.notion.site/Cosmic-Python-ba8357d1ede943df909c10fb4b518fff?pvs=4)
 
-***
+---
+
 ### Original readme
-***
+
+---
 
 ## Chapters
 
