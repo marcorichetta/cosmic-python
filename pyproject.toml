@@ -1,0 +1,13 @@
+[project]
+name = "cosmic_python"
+dynamic = ["readme"]
+version = "0.0.1"
+authors = [{ name="Marco Richetta", email="marcorichetta@gmail.com" }]
+
+
+[tool.ruff]
+# Enable flake8-bugbear (`B`) rules.
+select = ["E", "F", "B"]
+
+# Never enforce `E501` (line length violations).
+ignore = ["E501"]
