@@ -1,10 +1,2 @@
-# app
-sqlalchemy==1.4.48
-flask
-psycopg2-binary
-
-# tests
 pytest==7.3.1
-pytest-icdiff
-mypy
-requests
+sqlalchemy==1.4.48

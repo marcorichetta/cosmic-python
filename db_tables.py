@@ -1,11 +1,4 @@
 from sqlalchemy import Table, MetaData, Column, Integer, String, Date, ForeignKey
-<<<<<<<< HEAD:db_tables.py
-========
-from sqlalchemy.orm import mapper, relationship
-
-from allocation.domain import model
-
->>>>>>>> origin/appendix_project_structure:src/allocation/adapters/orm.py
 
 metadata = MetaData()
 

@@ -1,21 +1,26 @@
 # pylint: disable=protected-access
-from allocation.domain import model
-from allocation.adapters import repository
+import model
+import repository
 
 
 def test_repository_can_save_a_batch(session):
     batch = model.Batch("batch1", "RUSTY-SOAPDISH", 100, eta=None)
 
-    repo = repository.SqlAlchemyRepository(session)
+    repo = repository.SqlRepository(session)
     repo.add(batch)
     session.commit()
 
-    rows = session.execute('SELECT reference, sku, _purchased_quantity, eta FROM "batches"')
+    rows = session.execute(
+        'SELECT reference, sku, _purchased_quantity, eta FROM "batches"'
+    )
     assert list(rows) == [("batch1", "RUSTY-SOAPDISH", 100, None)]
 
 
 def insert_order_line(session):
-    session.execute("INSERT INTO order_lines (orderid, sku, qty)" ' VALUES ("order1", "GENERIC-SOFA", 12)')
+    session.execute(
+        "INSERT INTO order_lines (orderid, sku, qty)"
+        ' VALUES ("order1", "GENERIC-SOFA", 12)'
+    )
     [[orderline_id]] = session.execute(
         "SELECT id FROM order_lines WHERE orderid=:orderid AND sku=:sku",
         dict(orderid="order1", sku="GENERIC-SOFA"),
@@ -38,7 +43,8 @@ def insert_batch(session, batch_id):
 
 def insert_allocation(session, orderline_id, batch_id):
     session.execute(
-        "INSERT INTO allocations (orderline_id, batch_id)" " VALUES (:orderline_id, :batch_id)",
+        "INSERT INTO allocations (orderline_id, batch_id)"
+        " VALUES (:orderline_id, :batch_id)",
         dict(orderline_id=orderline_id, batch_id=batch_id),
     )
 
@@ -49,7 +55,7 @@ def test_repository_can_retrieve_a_batch_with_allocations(session):
     insert_batch(session, "batch2")
     insert_allocation(session, orderline_id, batch1_id)
 
-    repo = repository.SqlAlchemyRepository(session)
+    repo = repository.SqlRepository(session)
     retrieved = repo.get("batch1")
 
     expected = model.Batch("batch1", "GENERIC-SOFA", 100, eta=None)
@@ -81,7 +87,7 @@ def test_updating_a_batch(session):
     batch = model.Batch("batch1", "WEATHERED-BENCH", 100, eta=None)
     batch.allocate(order1)
 
-    repo = repository.SqlAlchemyRepository(session)
+    repo = repository.SqlRepository(session)
     repo.add(batch)
     session.commit()
 

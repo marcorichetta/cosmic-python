@@ -2,8 +2,11 @@ dist: xenial
 language: python
 python: 3.8
 
+install:
+- pip3 install sqlalchemy
+
 script:
-- make all
+- make test
 
 branches:
   except:

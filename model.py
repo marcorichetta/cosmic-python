@@ -1,10 +1,16 @@
 from dataclasses import dataclass
 from datetime import date
+from decimal import Decimal
 from typing import List, Optional
 
 
 class OutOfStock(Exception):
     ...
+
+
+@dataclass
+class Product:
+    sku: str
 
 
 """
@@ -16,17 +22,17 @@ uniquely identified by the data it holds; we usually make them immutable:
 
 @dataclass(unsafe_hash=True)
 class OrderLine:
-    orderid: str
+    order_reference: str
     sku: str
-    qty: int
+    quantity: int
 
 
 class Batch:
-    def __init__(self, reference: str, sku: str, qty: int, eta: Optional[date]):
+    def __init__(self, reference: str, sku: str, quantity: int, eta: Optional[date]):
         self.reference = reference
         self.sku = sku
         self.eta = eta
-        self._purchased_quantity = qty
+        self._purchased_quantity = quantity
         self._allocations = set()
 
     def __eq__(self, other: object) -> bool:
@@ -56,11 +62,11 @@ class Batch:
             self._allocations.remove(line)
 
     def can_allocate(self, line: OrderLine) -> bool:
-        return self.sku == line.sku and self.available_quantity >= line.qty
+        return self.sku == line.sku and self.available_quantity >= line.quantity
 
     @property
     def allocated_quantity(self) -> int:
-        return sum(line.qty for line in self._allocations)
+        return sum(line.quantity for line in self._allocations)
 
     @property
     def available_quantity(self) -> int:
