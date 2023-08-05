@@ -1,11 +1,7 @@
 from sqlalchemy import Table, MetaData, Column, Integer, String, Date, ForeignKey
-<<<<<<<< HEAD:db_tables.py
-========
 from sqlalchemy.orm import mapper, relationship
 
 from allocation.domain import model
-
->>>>>>>> origin/appendix_project_structure:src/allocation/adapters/orm.py
 
 metadata = MetaData()
 
@@ -35,3 +31,18 @@ allocations = Table(
     Column("orderline_id", ForeignKey("order_lines.id")),
     Column("batch_id", ForeignKey("batches.id")),
 )
+
+
+def start_mappers():
+    lines_mapper = mapper(model.OrderLine, order_lines)
+    mapper(
+        model.Batch,
+        batches,
+        properties={
+            "_allocations": relationship(
+                lines_mapper,
+                secondary=allocations,
+                collection_class=set,
+            )
+        },
+    )

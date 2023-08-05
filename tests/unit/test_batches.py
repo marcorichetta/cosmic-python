@@ -1,16 +1,12 @@
-from datetime import date, timedelta
-import pytest
-
-from model import Batch, OrderLine, OutOfStock, allocate
+from datetime import date
+from allocation.domain.model import Batch, OrderLine
 
 today = date.today()
-tomorrow = today + timedelta(days=1)
-later = tomorrow + timedelta(days=10)
 
 
 def make_batch_and_line(sku: str, batch_qty: int, line_qty: int):
-    batch = Batch(reference="batch-001", sku=sku, quantity=batch_qty, eta=today)
-    line = OrderLine(order_reference="order-001", sku=sku, quantity=line_qty)
+    batch = Batch(reference="batch-001", sku=sku, qty=batch_qty, eta=today)
+    line = OrderLine(orderid="order-001", sku=sku, qty=line_qty)
     return batch, line
 
 
