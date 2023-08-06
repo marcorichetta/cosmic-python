@@ -10,7 +10,7 @@ later = tomorrow + timedelta(days=10)
 
 def make_batch_and_line(sku: str, batch_qty: int, line_qty: int):
     batch = Batch(reference="batch-001", sku=sku, quantity=batch_qty, eta=today)
-    line = OrderLine(order_reference="order-001", sku=sku, quantity=line_qty)
+    line = OrderLine(orderid="order-001", sku=sku, qty=line_qty)
     return batch, line
 
 
