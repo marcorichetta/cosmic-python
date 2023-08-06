@@ -82,3 +82,8 @@ def allocate(line: OrderLine, batches: List[Batch]) -> str:
         return batch.reference
     except StopIteration:
         raise OutOfStock(f"Out of stock for sku {line.sku}") from None
+
+
+def deallocate(line: OrderLine, batches: List[Batch]):
+    batch = next(b for b in batches)
+    batch.deallocate(line)
