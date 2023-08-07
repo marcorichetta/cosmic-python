@@ -1,6 +1,9 @@
 from dataclasses import dataclass
 from datetime import date
 from typing import List, Optional, Set
+import logging
+
+logger = logging.getLogger()
 
 
 class OutOfStock(Exception):
@@ -85,5 +88,8 @@ def allocate(line: OrderLine, batches: List[Batch]) -> str:
 
 
 def deallocate(line: OrderLine, batches: List[Batch]):
-    batch = next(b for b in batches)
-    batch.deallocate(line)
+    try:
+        batch = next(b for b in batches if b.sku == line.sku)
+        batch.deallocate(line)
+    except StopIteration:
+        logger.warn("Attempting to deallocate an unallocated batch")

@@ -55,7 +55,6 @@ def test_commits():
 
 def test_deallocate_decrements_available_quantity():
     repo, session = FakeRepository([]), FakeSession()
-    # TODO: you'll need to implement the services.add_batch method
     services.add_batch("b1", "BLUE-PLINTH", 100, None, repo, session)
     line = model.OrderLine("o1", "BLUE-PLINTH", 10)
     services.allocate(line, repo, session)
@@ -66,8 +65,26 @@ def test_deallocate_decrements_available_quantity():
 
 
 def test_deallocate_decrements_correct_quantity():
-    ...  #  TODO - check that we decrement the right sku
+    repo, session = FakeRepository([]), FakeSession()
+
+    # Add two different batches
+    services.add_batch("b1", "RED-PLINTH", 100, None, repo, session)
+    services.add_batch("b2", "BLUE-PLINTH", 100, None, repo, session)
+
+    # Allocate one line
+    line = model.OrderLine("o1", "BLUE-PLINTH", 10)
+    services.allocate(line, repo, session)
+
+    # Check that we decrement the BLUE-PLINTH line
+    b2 = repo.get(reference="b2")
+    assert b2.available_quantity == 90
+    services.deallocate(line, repo, session)
+    assert b2.available_quantity == 100
 
 
-def test_trying_to_deallocate_unallocated_batch():
-    ...  #  TODO: should this error or pass silently? up to you.
+def test_trying_to_deallocate_unallocated_batch(caplog: pytest.LogCaptureFixture):
+    repo, session = FakeRepository([]), FakeSession()
+    line = model.OrderLine("o1", "BLUE-PLINTH", 10)
+    services.deallocate(line, repo, session)
+
+    assert "Attempting to deallocate an unallocated batch" in caplog.text

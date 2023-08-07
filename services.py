@@ -26,8 +26,8 @@ def allocate(line: OrderLine, repo: AbstractRepository, session) -> str:
     return batchref
 
 
-def deallocate(line: OrderLine, repo: AbstractRepository, session) -> str:
-    """Deallocates a previosuly allocated orderline"""
+def deallocate(line: OrderLine, repo: AbstractRepository, session) -> None:
+    """Deallocates a previously allocated orderline"""
 
     batches = repo.list()
     model.deallocate(line, batches)
