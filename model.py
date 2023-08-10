@@ -92,4 +92,4 @@ def deallocate(line: OrderLine, batches: List[Batch]):
         batch = next(b for b in batches if b.sku == line.sku)
         batch.deallocate(line)
     except StopIteration:
-        logger.warn("Attempting to deallocate an unallocated batch")
+        logger.warning("Attempting to deallocate an unallocated batch")
