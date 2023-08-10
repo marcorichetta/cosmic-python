@@ -6,7 +6,11 @@ import logging
 logger = logging.getLogger()
 
 
-class OutOfStock(Exception):
+class OutOfStockException(Exception):
+    ...
+
+
+class DeallocateBatchException(Exception):
     ...
 
 
@@ -84,7 +88,7 @@ def allocate(line: OrderLine, batches: List[Batch]) -> str:
         batch.allocate(line)
         return batch.reference
     except StopIteration:
-        raise OutOfStock(f"Out of stock for sku {line.sku}") from None
+        raise OutOfStockException(f"Out of stock for sku {line.sku}") from None
 
 
 def deallocate(line: OrderLine, batches: List[Batch]):
@@ -92,4 +96,4 @@ def deallocate(line: OrderLine, batches: List[Batch]):
         batch = next(b for b in batches if b.sku == line.sku)
         batch.deallocate(line)
     except StopIteration:
-        logger.warning("Attempting to deallocate an unallocated batch")
+        raise DeallocateBatchException(f"Attempting to deallocate an unallocated batch for sku {line.sku}") from None

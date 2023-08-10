@@ -27,10 +27,28 @@ def allocate_endpoint():
 
     try:
         batchref = services.allocate(line, repo, session)
-    except (model.OutOfStock, services.InvalidSku) as e:
+    except (model.OutOfStockException, services.InvalidSku) as e:
         return {"message": str(e)}, 400
 
     return {"batchref": batchref}, 201
+
+
+@app.route("/deallocate", methods=["POST"])
+def deallocate():
+    session = get_session()
+    repo = repository.SqlAlchemyRepository(session)
+
+    line = model.OrderLine(
+        request.json["orderid"],
+        request.json["sku"],
+        100,  # HACK - This works but I'm not sure why. Also it's hardcoded
+    )
+    try:
+        services.deallocate(line, repo, session)
+    except (model.DeallocateBatchException, services.InvalidSku) as e:
+        return {"message": str(e)}, 400
+
+    return {"message": "ok"}, 200
 
 
 @app.route("/batch", methods=["POST"])

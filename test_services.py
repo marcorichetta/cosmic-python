@@ -85,6 +85,6 @@ def test_deallocate_decrements_correct_quantity():
 def test_trying_to_deallocate_unallocated_batch(caplog: pytest.LogCaptureFixture):
     repo, session = FakeRepository([]), FakeSession()
     line = model.OrderLine("o1", "BLUE-PLINTH", 10)
-    services.deallocate(line, repo, session)
 
-    assert "Attempting to deallocate an unallocated batch" in caplog.text
+    with pytest.raises(model.DeallocateBatchException, match="unallocated batch for sku BLUE-PLINTH"):
+        services.deallocate(line, repo, session)
