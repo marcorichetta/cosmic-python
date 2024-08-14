@@ -2,9 +2,9 @@ from __future__ import annotations
 from datetime import date
 from typing import Optional
 
-import model
-from model import OrderLine
-from repository import AbstractRepository
+import domain.model as model
+from domain.model import OrderLine
+from adapters.repository import AbstractRepository
 
 
 class InvalidSku(Exception):
@@ -34,7 +34,14 @@ def deallocate(line: OrderLine, repo: AbstractRepository, session) -> None:
     session.commit()
 
 
-def add_batch(reference: str, sku: str, quantity: int, eta: Optional[date], repo: AbstractRepository, session) -> None:
+def add_batch(
+    reference: str,
+    sku: str,
+    quantity: int,
+    eta: Optional[date],
+    repo: AbstractRepository,
+    session,
+) -> None:
     """Creates a new Batch and saves it to the repository"""
 
     batch = model.Batch(reference, sku, quantity, eta)

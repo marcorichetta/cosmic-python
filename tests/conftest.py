@@ -9,7 +9,7 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, clear_mappers
 
-from orm import metadata, start_mappers
+from adapters.orm import metadata, start_mappers
 import config
 
 
@@ -71,7 +71,8 @@ def add_stock(postgres_session):
     def _add_stock(lines):
         for ref, sku, qty, eta in lines:
             postgres_session.execute(
-                "INSERT INTO batches (reference, sku, _purchased_quantity, eta)" " VALUES (:ref, :sku, :qty, :eta)",
+                "INSERT INTO batches (reference, sku, _purchased_quantity, eta)"
+                " VALUES (:ref, :sku, :qty, :eta)",
                 dict(ref=ref, sku=sku, qty=qty, eta=eta),
             )
             [[batch_id]] = postgres_session.execute(
@@ -103,6 +104,6 @@ def add_stock(postgres_session):
 
 @pytest.fixture
 def restart_api():
-    (Path(__file__).parent / "flask_app.py").touch()
+    (Path(__file__).parent / "../entrypoints/flask_app.py").touch()
     time.sleep(0.5)
     wait_for_webapp_to_come_up()

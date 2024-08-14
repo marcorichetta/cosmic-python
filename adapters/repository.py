@@ -3,7 +3,7 @@ from typing import Optional
 
 from sqlalchemy.engine import Result
 
-import model
+import domain.model as model
 
 
 class AbstractRepository(abc.ABC):

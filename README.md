@@ -13,6 +13,13 @@ El repo incluye branches por cada capítulo pero yo tomé otro approach.
     > git merge chapter_0x
     ```
 
+## Estructura
+
+-   `domain`: Currently that’s just one file, but for a more complex application, you might have one file per class; you might have helper parent classes for Entity, ValueObject, and Aggregate, and you might add an exceptions.py for domain-layer exceptions, commands.py and events.py.
+-   `service_layer`: Currently that’s just one file called services.py for our service-layer functions.
+-   `adapters`: is a nod to the ports and adapters terminology. This will fill up with any other abstractions around external I/O (e.g., a redis_client.py).
+-   `entrypoints`: the places we drive our application from.
+
 ## Notas
 
 Mis notas en [Notion](https://marcorichetta.notion.site/Cosmic-Python-ba8357d1ede943df909c10fb4b518fff?pvs=4)

@@ -1,7 +1,7 @@
 import pytest
-import model
-import repository
-import services
+import domain.model as model
+import adapters.repository as repository
+import service_layer.services as services
 
 
 class FakeRepository(repository.AbstractRepository):
@@ -86,5 +86,7 @@ def test_trying_to_deallocate_unallocated_batch(caplog: pytest.LogCaptureFixture
     repo, session = FakeRepository([]), FakeSession()
     line = model.OrderLine("o1", "BLUE-PLINTH", 10)
 
-    with pytest.raises(model.DeallocateBatchException, match="unallocated batch for sku BLUE-PLINTH"):
+    with pytest.raises(
+        model.DeallocateBatchException, match="unallocated batch for sku BLUE-PLINTH"
+    ):
         services.deallocate(line, repo, session)
