@@ -59,14 +59,21 @@ def test_deallocate():
     sku, order1, order2 = random_sku(), random_orderid(), random_orderid()
     batch = random_batchref()
     url = config.get_api_url()
-    r = requests.post(f"{url}/batch", json={"batchref": batch, "sku": sku, "qty": 100, "eta": "2011-01-02"})
+    r = requests.post(
+        f"{url}/batch",
+        json={"batchref": batch, "sku": sku, "qty": 100, "eta": "2011-01-02"},
+    )
 
     # fully allocate
-    r = requests.post(f"{url}/allocate", json={"orderid": order1, "sku": sku, "qty": 100})
+    r = requests.post(
+        f"{url}/allocate", json={"orderid": order1, "sku": sku, "qty": 100}
+    )
     assert r.json()["batchref"] == batch
 
     # cannot allocate second order
-    r = requests.post(f"{url}/allocate", json={"orderid": order2, "sku": sku, "qty": 100})
+    r = requests.post(
+        f"{url}/allocate", json={"orderid": order2, "sku": sku, "qty": 100}
+    )
     assert r.status_code == 400
 
     # deallocate
@@ -80,6 +87,8 @@ def test_deallocate():
     assert r.ok
 
     # now we can allocate second order
-    r = requests.post(f"{url}/allocate", json={"orderid": order2, "sku": sku, "qty": 100})
+    r = requests.post(
+        f"{url}/allocate", json={"orderid": order2, "sku": sku, "qty": 100}
+    )
     assert r.ok
     assert r.json()["batchref"] == batch

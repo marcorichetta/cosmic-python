@@ -41,7 +41,8 @@ def deallocate():
     line = model.OrderLine(
         request.json["orderid"],
         request.json["sku"],
-        100,  # HACK - This works but I'm not sure why. Also it's hardcoded
+        100,  # HACK - Hardcoded - quantity plays a role in equality for OrderLines
+        # Either pass it from the test or get it from the existent one
     )
     try:
         services.deallocate(line, repo, session)
@@ -56,7 +57,11 @@ def add_batch():
     session = get_session()
     repo = repository.SqlAlchemyRepository(session)
 
-    date = datetime.strptime(request.json["eta"], "%Y-%m-%d").date() if request.json["eta"] else None
+    date = (
+        datetime.strptime(request.json["eta"], "%Y-%m-%d").date()
+        if request.json["eta"]
+        else None
+    )
 
     try:
         batchref = services.add_batch(
