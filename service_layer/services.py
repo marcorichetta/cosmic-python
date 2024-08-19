@@ -15,21 +15,29 @@ def is_valid_sku(sku, batches):
     return sku in {b.sku for b in batches}
 
 
-def allocate(line: OrderLine, repo: AbstractRepository, session) -> str:
+def allocate(
+    orderid: str, sku: str, qty: int, repo: AbstractRepository, session
+) -> str:
     """Allocates an orderline from available batches"""
 
     batches = repo.list()
-    if not is_valid_sku(line.sku, batches):
-        raise InvalidSku(f"Invalid sku {line.sku}")
-    batchref = model.allocate(line, batches)
+    if not is_valid_sku(sku, batches):
+        raise InvalidSku(f"Invalid sku {sku}")
+
+    line = OrderLine(orderid, sku, qty)
+    ref = model.allocate(line, batches)
     session.commit()
-    return batchref
+    return ref
 
 
-def deallocate(line: OrderLine, repo: AbstractRepository, session) -> None:
+def deallocate(
+    orderid: str, sku: str, qty: int, repo: AbstractRepository, session
+) -> None:
     """Deallocates a previously allocated orderline"""
 
     batches = repo.list()
+
+    line = OrderLine(orderid, sku, qty)
     model.deallocate(line, batches)
     session.commit()
 

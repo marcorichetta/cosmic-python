@@ -9,6 +9,9 @@ import adapters.orm as orm
 import adapters.repository as repository
 import service_layer.services as services
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 orm.start_mappers()
 get_session = sessionmaker(bind=create_engine(config.get_postgres_uri()))
@@ -19,18 +22,19 @@ app = Flask(__name__)
 def allocate_endpoint():
     session = get_session()
     repo = repository.SqlAlchemyRepository(session)
-    line = model.OrderLine(
-        request.json["orderid"],
-        request.json["sku"],
-        request.json["qty"],
-    )
 
     try:
-        batchref = services.allocate(line, repo, session)
+        ref = services.allocate(
+            request.json["orderid"],
+            request.json["sku"],
+            request.json["qty"],
+            repo,
+            session,
+        )
     except (model.OutOfStockException, services.InvalidSku) as e:
         return {"message": str(e)}, 400
 
-    return {"batchref": batchref}, 201
+    return {"ref": ref}, 201
 
 
 @app.route("/deallocate", methods=["POST"])
@@ -38,42 +42,43 @@ def deallocate():
     session = get_session()
     repo = repository.SqlAlchemyRepository(session)
 
-    line = model.OrderLine(
-        request.json["orderid"],
-        request.json["sku"],
-        100,  # HACK - Hardcoded - quantity plays a role in equality for OrderLines
-        # Either pass it from the test or get it from the existent one
-    )
     try:
-        services.deallocate(line, repo, session)
+        services.deallocate(
+            request.json["orderid"],
+            request.json["sku"],
+            100,  # HACK - Hardcoded - quantity plays a role in equality for OrderLines. Either pass it from the test or get it from the existent one
+            repo,
+            session,
+        )
     except (model.DeallocateBatchException, services.InvalidSku) as e:
         return {"message": str(e)}, 400
 
     return {"message": "ok"}, 200
 
 
-@app.route("/batch", methods=["POST"])
+@app.route("/batches", methods=["POST"])
 def add_batch():
     session = get_session()
     repo = repository.SqlAlchemyRepository(session)
 
-    date = (
-        datetime.strptime(request.json["eta"], "%Y-%m-%d").date()
+    eta = (
+        datetime.fromisoformat(request.json["eta"]).date()
         if request.json["eta"]
         else None
     )
 
     try:
-        batchref = services.add_batch(
-            request.json["batchref"],
+        ref = services.add_batch(
+            request.json["ref"],
             request.json["sku"],
             request.json["qty"],
-            date,
+            eta,
             repo,
             session,
         )
 
     except Exception as e:
+        logger.exception(e)
         return {"message": str(e)}, 400
 
-    return {"batchref": batchref}, 201
+    return {"ref": ref}, 201
