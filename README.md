@@ -5,7 +5,7 @@ Este repo contiene ejercicios/comentarios/etc que acompañan al libro https://ww
 El repo incluye branches por cada capítulo pero yo tomé otro approach.
 
 1. Empecé con la rama `chapter_01_domain_model_exercise`
-1. Al finalizar con ese chapter, taggeo el commit `git tag -a 0.1 -m "Ch 01 - Domain modeling"`
+1. Al finalizar con ese chapter, taggeo el commit `git tag -a 0.1 -m "Ch 01 - Domain modeling"` y `git push --follow-tags`
 1. Sigo trabajando en la misma rama y a medida que avanzo mergeo las ramas de los otros capítulos
     ```bash
     > git status
