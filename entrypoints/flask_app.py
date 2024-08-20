@@ -7,6 +7,7 @@ import config
 import domain.model as model
 import adapters.orm as orm
 import adapters.repository as repository
+from service_layer import unit_of_work
 import service_layer.services as services
 
 import logging
@@ -20,16 +21,11 @@ app = Flask(__name__)
 
 @app.route("/allocate", methods=["POST"])
 def allocate_endpoint():
-    session = get_session()
-    repo = repository.SqlAlchemyRepository(session)
+    uow = unit_of_work.SqlAlchemyUnitOfWork()
 
     try:
         ref = services.allocate(
-            request.json["orderid"],
-            request.json["sku"],
-            request.json["qty"],
-            repo,
-            session,
+            request.json["orderid"], request.json["sku"], request.json["qty"], uow
         )
     except (model.OutOfStockException, services.InvalidSku) as e:
         return {"message": str(e)}, 400
@@ -39,16 +35,14 @@ def allocate_endpoint():
 
 @app.route("/deallocate", methods=["POST"])
 def deallocate():
-    session = get_session()
-    repo = repository.SqlAlchemyRepository(session)
+    uow = unit_of_work.SqlAlchemyUnitOfWork()
 
     try:
         services.deallocate(
             request.json["orderid"],
             request.json["sku"],
             100,  # HACK - Hardcoded - quantity plays a role in equality for OrderLines. Either pass it from the test or get it from the existent one
-            repo,
-            session,
+            uow,
         )
     except (model.DeallocateBatchException, services.InvalidSku) as e:
         return {"message": str(e)}, 400
@@ -58,8 +52,7 @@ def deallocate():
 
 @app.route("/batches", methods=["POST"])
 def add_batch():
-    session = get_session()
-    repo = repository.SqlAlchemyRepository(session)
+    uow = unit_of_work.SqlAlchemyUnitOfWork()
 
     eta = (
         datetime.fromisoformat(request.json["eta"]).date()
@@ -69,12 +62,7 @@ def add_batch():
 
     try:
         ref = services.add_batch(
-            request.json["ref"],
-            request.json["sku"],
-            request.json["qty"],
-            eta,
-            repo,
-            session,
+            request.json["ref"], request.json["sku"], request.json["qty"], eta, uow
         )
 
     except Exception as e:
