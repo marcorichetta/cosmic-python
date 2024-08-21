@@ -12,8 +12,8 @@ class FakeRepository(repository.AbstractRepository):
     def add(self, batch):
         self._batches.add(batch)
 
-    def get(self, reference):
-        return next(b for b in self._batches if b.reference == reference)
+    def get(self, sku):
+        return next((p for p in self._batches if p.sku == sku), None)
 
     def list(self):
         return list(self._batches)
@@ -23,16 +23,9 @@ class FakeRepository(repository.AbstractRepository):
         return FakeRepository([model.Batch(ref, sku, qty, eta)])
 
 
-class FakeSession:
-    committed = False
-
-    def commit(self):
-        self.committed = True
-
-
 class FakeUnitOfWork(AbstractUnitOfWork):
     def __init__(self, *args, **kwargs):
-        self.batches = FakeRepository([])
+        self.products = FakeRepository([])
         self.committed = False
 
     def commit(self):
@@ -40,6 +33,20 @@ class FakeUnitOfWork(AbstractUnitOfWork):
 
     def rollback(self):
         pass
+
+
+def test_add_batch_for_new_product():
+    uow = FakeUnitOfWork()
+    services.add_batch("b1", "CRUNCHY-ARMCHAIR", 100, None, uow)
+    assert uow.products.get("CRUNCHY-ARMCHAIR") is not None
+    assert uow.committed
+
+
+def test_add_batch_for_existing_product():
+    uow = FakeUnitOfWork()
+    services.add_batch("b1", "GARISH-RUG", 100, None, uow)
+    services.add_batch("b2", "GARISH-RUG", 99, None, uow)
+    assert "b2" in [b.reference for b in uow.products.get("GARISH-RUG").batches]
 
 
 def test_allocate_returns_allocation():
@@ -58,12 +65,11 @@ def test_allocate_errors_for_invalid_sku():
         services.allocate("o1", "NONEXISTENTSKU", 10, uow)
 
 
-def test_commits():
+def test_allocate_commits():
     uow = FakeUnitOfWork()
-
     services.add_batch("b1", "OMINOUS-MIRROR", 100, None, uow)
     services.allocate("o1", "OMINOUS-MIRROR", 10, uow)
-    assert uow.committed is True
+    assert uow.committed
 
 
 def test_deallocate_decrements_available_quantity():
@@ -71,7 +77,7 @@ def test_deallocate_decrements_available_quantity():
     services.add_batch("b1", "BLUE-PLINTH", 100, None, uow)
 
     services.allocate("o1", "BLUE-PLINTH", 10, uow)
-    batch = uow.batches.get(reference="b1")
+    batch = uow.products.get(reference="b1")
     assert batch.available_quantity == 90
     services.deallocate("o1", "BLUE-PLINTH", 10, uow)
     assert batch.available_quantity == 100
@@ -88,7 +94,7 @@ def test_deallocate_decrements_correct_quantity():
     services.allocate("o1", "BLUE-PLINTH", 10, uow)
 
     # Check that we decrement the BLUE-PLINTH line
-    b2 = uow.batches.get(reference="b2")
+    b2 = uow.products.get(reference="b2")
     assert b2.available_quantity == 90
     services.deallocate("o1", "BLUE-PLINTH", 10, uow)
     assert b2.available_quantity == 100
@@ -107,5 +113,4 @@ def test_add_batch():
     uow = FakeUnitOfWork()
 
     services.add_batch("b1", "CRUNCHY-ARMCHAIR", 100, None, uow)
-    assert uow.batches.get("b1") is not None
-    assert uow.committed
+    assert uow.products.get("b1") is not None

@@ -5,13 +5,18 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine import create_engine
 import config
 
-DEFAULT_SESSION_FACTORY = sessionmaker(bind=create_engine(config.get_postgres_uri()))
+DEFAULT_SESSION_FACTORY = sessionmaker(
+    bind=create_engine(
+        config.get_postgres_uri(),
+        isolation_level="REPEATABLE HEAD",
+    )
+)
 
 
 class AbstractUnitOfWork(abc.ABC):
     """The UoW handles the interaction with the DB and the service layer"""
 
-    batches: repository.AbstractRepository
+    products: repository.AbstractProductRepository
 
     def __enter__(self) -> "AbstractUnitOfWork":
         return self
@@ -36,7 +41,7 @@ class SqlAlchemyUnitOfWork(AbstractUnitOfWork):
 
     def __enter__(self):
         self.session = self.session_factory()
-        self.batches = repository.SqlAlchemyRepository(self.session)
+        self.products = repository.SqlAlchemyRepository(self.session)
         return super().__enter__()
 
     def __exit__(self, *args):

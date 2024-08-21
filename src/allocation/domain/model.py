@@ -1,6 +1,8 @@
+from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
-from typing import List, Optional, Set
+from typing import Optional
+
 import logging
 
 logger = logging.getLogger()
@@ -14,15 +16,13 @@ class DeallocateBatchException(Exception):
     ...
 
 
-"""
-Whenever we have a business concept that has data but no identity, we often choose to
-represent it using the Value Object pattern. A value object is any domain object that is
-uniquely identified by the data it holds; we usually make them immutable:
-"""
-
-
 @dataclass(unsafe_hash=True)
 class OrderLine:
+    """
+    Whenever we have a business concept that has data but no identity, we often choose to
+    represent it using the Value Object pattern. A value object is any domain object that is
+    uniquely identified by the data it holds; we usually make them immutable."""
+
     orderid: str
     sku: str
     qty: int
@@ -35,6 +35,9 @@ class Batch:
         self.eta = eta
         self._purchased_quantity = quantity
         self._allocations = set()  # type: Set[OrderLine]
+
+    def __repr__(self) -> str:
+        return f"Batch - Ref: {self.reference} - SKU: {self.sku}"
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Batch):
@@ -74,28 +77,34 @@ class Batch:
         return self._purchased_quantity - self.allocated_quantity
 
 
-def allocate(line: OrderLine, batches: List[Batch]) -> str:
-    """Assigns one `Batch` to an OrderLine given some priorities
-    - it prefers Batches in stock over ones on shipment.
-    - it prefers earlier Batches.
+class Product:
+    """A product has a unique ID (sku) and also batches associated to it that can be allocated to OrderLines"""
 
-    Returns:
-        str: allocated Batch reference
-    """
+    def __init__(self, *args, **kwargs):
+        self.sku = kwargs.get("sku")
+        self.batches = kwargs.get("batches")
 
-    try:
-        batch: Batch = next(b for b in sorted(batches) if b.can_allocate(line))
-        batch.allocate(line)
-        return batch.reference
-    except StopIteration:
-        raise OutOfStockException(f"Out of stock for sku {line.sku}") from None
+    def allocate(self, line: OrderLine) -> str:
+        """Assigns one `Batch` to an OrderLine given some priorities
+        - it prefers Batches in stock over ones on shipment.
+        - it prefers earlier Batches.
 
+        Returns:
+            str: allocated Batch reference
+        """
 
-def deallocate(line: OrderLine, batches: List[Batch]):
-    try:
-        batch = next(b for b in batches if b.sku == line.sku)
-        batch.deallocate(line)
-    except StopIteration:
-        raise DeallocateBatchException(
-            f"Attempting to deallocate an unallocated batch for sku {line.sku}"
-        ) from None
+        try:
+            batch: Batch = next(b for b in sorted(self.batches) if b.can_allocate(line))
+            batch.allocate(line)
+            return batch.reference
+        except StopIteration:
+            raise OutOfStockException(f"Out of stock for sku {line.sku}") from None
+
+    def deallocate(self, line: OrderLine):
+        try:
+            batch: Batch = next(b for b in self.batches if b.sku == line.sku)
+            batch.deallocate(line)
+        except StopIteration:
+            raise DeallocateBatchException(
+                f"Attempting to deallocate an unallocated batch for sku {line.sku}"
+            ) from None

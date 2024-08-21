@@ -1,7 +1,6 @@
-import uuid
 import pytest
 import requests
-
+import uuid
 import config
 
 
