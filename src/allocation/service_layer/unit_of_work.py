@@ -8,7 +8,7 @@ import allocation.config as config
 DEFAULT_SESSION_FACTORY = sessionmaker(
     bind=create_engine(
         config.get_postgres_uri(),
-        isolation_level="REPEATABLE READ",
+        isolation_level="REPEATABLE READ",  # https://www.postgresql.org/docs/12/transaction-iso.html#XACT-REPEATABLE-READ
     )
 )
 
