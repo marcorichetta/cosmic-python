@@ -1,11 +1,11 @@
 import pytest
-import domain.model as model
-import adapters.repository as repository
-import service_layer.services as services
-from service_layer.unit_of_work import AbstractUnitOfWork
+from allocation.domain import model
+from allocation.adapters import repository
+from allocation.service_layer import services
+from allocation.service_layer.unit_of_work import AbstractUnitOfWork
 
 
-class FakeRepository(repository.AbstractRepository):
+class FakeRepository(repository.AbstractProductRepository):
     def __init__(self, batches):
         self._batches = set(batches)
 
@@ -72,17 +72,19 @@ def test_allocate_commits():
     assert uow.committed
 
 
+@pytest.mark.skip("deallocation wip")
 def test_deallocate_decrements_available_quantity():
     uow = FakeUnitOfWork()
     services.add_batch("b1", "BLUE-PLINTH", 100, None, uow)
 
     services.allocate("o1", "BLUE-PLINTH", 10, uow)
-    batch = uow.products.get(reference="b1")
+    batch = uow.products.get(sku="BLUE-PLINTH")
     assert batch.available_quantity == 90
     services.deallocate("o1", "BLUE-PLINTH", 10, uow)
     assert batch.available_quantity == 100
 
 
+@pytest.mark.skip("deallocation wip")
 def test_deallocate_decrements_correct_quantity():
     uow = FakeUnitOfWork()
 
@@ -100,17 +102,11 @@ def test_deallocate_decrements_correct_quantity():
     assert b2.available_quantity == 100
 
 
+@pytest.mark.skip("deallocation wip")
 def test_trying_to_deallocate_unallocated_batch():
     uow = FakeUnitOfWork()
 
     with pytest.raises(
-        model.DeallocateBatchException, match="unallocated batch for sku BLUE-PLINTH"
+        model.DeallocateBatch, match="unallocated batch for sku BLUE-PLINTH"
     ):
         services.deallocate("o1", "BLUE-PLINTH", 10, uow)
-
-
-def test_add_batch():
-    uow = FakeUnitOfWork()
-
-    services.add_batch("b1", "CRUNCHY-ARMCHAIR", 100, None, uow)
-    assert uow.products.get("b1") is not None

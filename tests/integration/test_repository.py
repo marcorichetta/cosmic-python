@@ -1,7 +1,7 @@
 # pylint: disable=protected-access
 import pytest
-import domain.model as model
-import adapters.repository as repository
+from allocation.domain import model
+from allocation.adapters import repository
 
 
 def test_repository_can_save_a_batch(session):
@@ -19,8 +19,7 @@ def test_repository_can_save_a_batch(session):
 
 def insert_order_line(session, orderid, sku, qty):
     session.execute(
-        "INSERT INTO order_lines (orderid, sku, qty)"
-        " VALUES (:orderid, :sku, :qty)",
+        "INSERT INTO order_lines (orderid, sku, qty)" " VALUES (:orderid, :sku, :qty)",
         dict(orderid=orderid, sku=sku, qty=qty),
     )
     [[orderline_id]] = session.execute(

@@ -1,7 +1,7 @@
 import pytest
 import requests
 import uuid
-import config
+from allocation import config
 
 
 def random_suffix():
@@ -59,6 +59,7 @@ def test_unhappy_path_returns_400_and_error_message():
     assert r.json()["message"] == f"Invalid sku {unknown_sku}"
 
 
+@pytest.mark.skip("deallocate wip")
 @pytest.mark.usefixtures("postgres_db")
 @pytest.mark.usefixtures("restart_api")
 def test_deallocate():

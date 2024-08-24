@@ -26,9 +26,10 @@ def add_batch(
     with uow:
         product = uow.products.get(sku=sku)
         if product is None:
-            product = model.Product(sku, batches=[])
+            product = model.Product(sku=sku, batches=[])
             uow.products.add(product)
         batch = model.Batch(reference, sku, quantity, eta)
+
         product.batches.append(batch)
         uow.commit()
 
@@ -43,7 +44,7 @@ def allocate(
     line = model.OrderLine(orderid, sku, qty)
 
     with uow:
-        product: model.Product = uow.products.get(sku=line.sku)
+        product = uow.products.get(sku=line.sku)
         if product is None:
             raise InvalidSku(f"Invalid sku {line.sku}")
 

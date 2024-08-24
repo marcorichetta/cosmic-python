@@ -8,11 +8,11 @@ import logging
 logger = logging.getLogger()
 
 
-class OutOfStockException(Exception):
+class OutOfStock(Exception):
     ...
 
 
-class DeallocateBatchException(Exception):
+class DeallocateBatch(Exception):
     ...
 
 
@@ -80,9 +80,15 @@ class Batch:
 class Product:
     """A product has a unique ID (sku) and also batches associated to it that can be allocated to OrderLines"""
 
-    def __init__(self, *args, **kwargs):
-        self.sku = kwargs.get("sku")
-        self.batches = kwargs.get("batches")
+    def __init__(
+        self, sku: str, batches: list, version_number: int = 0, *args, **kwargs
+    ):
+        self.sku = sku
+        self.batches = batches
+        self.version_number = version_number
+
+    def __repr__(self) -> str:
+        return f"Product {self.sku}"
 
     def allocate(self, line: OrderLine) -> str:
         """Assigns one `Batch` to an OrderLine given some priorities
@@ -96,15 +102,16 @@ class Product:
         try:
             batch: Batch = next(b for b in sorted(self.batches) if b.can_allocate(line))
             batch.allocate(line)
+            self.version_number += 1
             return batch.reference
         except StopIteration:
-            raise OutOfStockException(f"Out of stock for sku {line.sku}") from None
+            raise OutOfStock(f"Out of stock for sku {line.sku}") from None
 
     def deallocate(self, line: OrderLine):
         try:
             batch: Batch = next(b for b in self.batches if b.sku == line.sku)
             batch.deallocate(line)
         except StopIteration:
-            raise DeallocateBatchException(
+            raise DeallocateBatch(
                 f"Attempting to deallocate an unallocated batch for sku {line.sku}"
             ) from None

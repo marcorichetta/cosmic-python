@@ -10,9 +10,10 @@ from ..random_refs import random_sku, random_batchref, random_orderid
 
 
 def insert_batch(session, ref, sku, qty, eta, product_version=1):
-    # session.execute(
-    #     'INSERT INTO products ...?
-    # )
+    session.execute(
+        "INSERT INTO products (sku, version_number) VALUES (:sku, :version_number)",
+        dict(sku=sku, version_number=product_version),
+    )
     session.execute(
         "INSERT INTO batches (reference, sku, _purchased_quantity, eta)"
         " VALUES (:ref, :sku, :qty, :eta)",

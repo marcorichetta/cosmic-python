@@ -1,14 +1,14 @@
 import abc
 
-from adapters import repository
+from allocation.adapters import repository
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine import create_engine
-import config
+import allocation.config as config
 
 DEFAULT_SESSION_FACTORY = sessionmaker(
     bind=create_engine(
         config.get_postgres_uri(),
-        isolation_level="REPEATABLE HEAD",
+        isolation_level="REPEATABLE READ",
     )
 )
 
