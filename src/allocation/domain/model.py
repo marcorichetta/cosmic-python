@@ -1,19 +1,19 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
-from typing import Optional
+from typing import List, Optional
 
 import logging
+
+from allocation.domain import events
 
 logger = logging.getLogger()
 
 
-class OutOfStock(Exception):
-    ...
+class OutOfStock(Exception): ...
 
 
-class DeallocateBatch(Exception):
-    ...
+class DeallocateBatch(Exception): ...
 
 
 @dataclass(unsafe_hash=True)
@@ -86,11 +86,12 @@ class Product:
         self.sku = sku
         self.batches = batches
         self.version_number = version_number
+        self.events: List[events.Event] = []
 
     def __repr__(self) -> str:
         return f"Product {self.sku}"
 
-    def allocate(self, line: OrderLine) -> str:
+    def allocate(self, line: OrderLine) -> str | None:
         """Assigns one `Batch` to an OrderLine given some priorities
         - it prefers Batches in stock over ones on shipment.
         - it prefers earlier Batches.
@@ -105,7 +106,8 @@ class Product:
             self.version_number += 1
             return batch.reference
         except StopIteration:
-            raise OutOfStock(f"Out of stock for sku {line.sku}") from None
+            self.events.append(events.OutOfStock(line.sku))
+            return None
 
     def deallocate(self, line: OrderLine):
         try:

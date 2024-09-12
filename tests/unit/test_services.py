@@ -6,17 +6,18 @@ from allocation.service_layer.unit_of_work import AbstractUnitOfWork
 
 
 class FakeRepository(repository.AbstractProductRepository):
-    def __init__(self, batches):
-        self._batches = set(batches)
+    def __init__(self, products):
+        super().__init__()
+        self._products = set(products)
 
-    def add(self, batch):
-        self._batches.add(batch)
+    def _add(self, batch):
+        self._products.add(batch)
 
-    def get(self, sku):
-        return next((p for p in self._batches if p.sku == sku), None)
+    def _get(self, sku):
+        return next((p for p in self._products if p.sku == sku), None)
 
     def list(self):
-        return list(self._batches)
+        return list(self._products)
 
     @staticmethod
     def for_batch(ref: str, sku: str, qty: int, eta=None):
@@ -28,7 +29,7 @@ class FakeUnitOfWork(AbstractUnitOfWork):
         self.products = FakeRepository([])
         self.committed = False
 
-    def commit(self):
+    def _commit(self):
         self.committed = True
 
     def rollback(self):

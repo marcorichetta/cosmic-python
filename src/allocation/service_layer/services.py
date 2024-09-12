@@ -3,6 +3,7 @@ from typing import Optional
 from datetime import date
 
 from allocation.domain import model
+from allocation.service_layer import messagebus
 from allocation.service_layer.unit_of_work import AbstractUnitOfWork
 
 
@@ -47,11 +48,9 @@ def allocate(
         product = uow.products.get(sku=line.sku)
         if product is None:
             raise InvalidSku(f"Invalid sku {line.sku}")
-
         batchref = product.allocate(line)
         uow.commit()
-
-    return batchref
+        return batchref
 
 
 def deallocate(orderid: str, sku: str, qty: int, uow: AbstractUnitOfWork) -> None:

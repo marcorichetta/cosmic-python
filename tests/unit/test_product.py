@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from allocation.domain import events
 import pytest
 from allocation.domain.model import Product, OrderLine, Batch, OutOfStock
 
@@ -42,13 +43,16 @@ def test_returns_allocated_batch_ref():
     assert allocation == in_stock_batch.reference
 
 
-def test_raises_out_of_stock_exception_if_cannot_allocate():
-    batch = Batch("batch1", "SMALL-FORK", 10, eta=today)
-    product = Product(sku="SMALL-FORK", batches=[batch])
-    product.allocate(OrderLine("order1", "SMALL-FORK", 10))
+def test_records_out_of_stock_event_if_cannot_allocate():
+    sku = "SMALL-FORK"
+    batch = Batch("batch1", sku, 10, eta=today)
+    product = Product(sku, batches=[batch])
+    product.allocate(OrderLine("order1", sku, 10))
 
-    with pytest.raises(OutOfStock, match="SMALL-FORK"):
-        product.allocate(OrderLine("order2", "SMALL-FORK", 1))
+    allocation = product.allocate(OrderLine("order2", sku, 1))
+    print(product.events)
+    assert product.events[-1] == events.OutOfStock(sku)
+    assert allocation is None
 
 
 def test_increments_version_number():

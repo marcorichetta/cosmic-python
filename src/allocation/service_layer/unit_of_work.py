@@ -4,6 +4,7 @@ from allocation.adapters import repository
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine import create_engine
 import allocation.config as config
+from allocation.service_layer import messagebus
 
 DEFAULT_SESSION_FACTORY = sessionmaker(
     bind=create_engine(
@@ -24,8 +25,18 @@ class AbstractUnitOfWork(abc.ABC):
     def __exit__(self, *args):
         self.rollback()
 
-    @abc.abstractmethod
     def commit(self):
+        self._commit()
+        self.publish_events()
+
+    def publish_events(self):
+        for product in self.products.seen:
+            while product.events:
+                event = product.events.pop(0)
+                messagebus.handle(event)
+
+    @abc.abstractmethod
+    def _commit(self):
         """Commit changes to be saved in our repository"""
         raise NotImplementedError
 
@@ -48,7 +59,7 @@ class SqlAlchemyUnitOfWork(AbstractUnitOfWork):
         super().__exit__(*args)
         self.session.close()
 
-    def commit(self):
+    def _commit(self):
         self.session.commit()
 
     def rollback(self):
