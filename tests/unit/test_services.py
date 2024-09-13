@@ -5,15 +5,15 @@ from allocation.service_layer import services
 from allocation.service_layer.unit_of_work import AbstractUnitOfWork
 
 
-class FakeRepository(repository.AbstractProductRepository):
+class FakeRepository(repository.AbstractRepository):
     def __init__(self, products):
         super().__init__()
         self._products = set(products)
 
-    def _add(self, batch):
+    def add(self, batch):
         self._products.add(batch)
 
-    def _get(self, sku):
+    def get(self, sku):
         return next((p for p in self._products if p.sku == sku), None)
 
     def list(self):
@@ -26,7 +26,7 @@ class FakeRepository(repository.AbstractProductRepository):
 
 class FakeUnitOfWork(AbstractUnitOfWork):
     def __init__(self, *args, **kwargs):
-        self.products = FakeRepository([])
+        self.products = repository.TrackingRepository(FakeRepository([]))
         self.committed = False
 
     def _commit(self):

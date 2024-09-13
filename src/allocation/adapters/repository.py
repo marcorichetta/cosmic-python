@@ -1,47 +1,50 @@
-import abc
+from typing import Protocol, Set
 
 from allocation.domain import model
 
 
-class AbstractProductRepository(abc.ABC):
+class AbstractRepository(Protocol):
     """Simplest abstract repository"""
 
-    def __init__(self, *args, **kwargs):
-        self.seen = set()  # type: Set(model.Product)
+    def add(self, product: model.Product): ...
 
-    # Python will refuse to let you instantiate a class that does not implement
-    # all the abstractmethods defined in its parent class.
-    @abc.abstractmethod
-    def _add(self, product: model.Product):
-        raise NotImplementedError
+    def get(self, sku) -> model.Product: ...
 
-    # An alternative to look into is PEP 544 protocols. These give you typing without
-    # the possibility of inheritance, which "prefer composition over inheritance" fans
-    # will particularly like.
-    @abc.abstractmethod
-    def _get(self, sku) -> model.Product:
-        raise NotImplementedError
+
+class TrackingRepository:
+    """
+    Implementation of a repository that tracks "seen" products.
+    """
+
+    seen: Set[model.Product]
+
+    def __init__(self, repo: AbstractRepository):
+        self.seen = set()
+        self._repo = repo
 
     def add(self, product: model.Product):
-        self._add(product)
+        self._repo.add(product)
         self.seen.add(product)
 
     def get(self, sku) -> model.Product:
-        product = self._get(sku)
+        product = self._repo.get(sku)
         if product:
             self.seen.add(product)
         return product
 
 
-class SqlAlchemyRepository(AbstractProductRepository):
+class SqlAlchemyRepository:
+    """
+    Repository that interacts with the DB using SQLAlchemy
+    """
+
     def __init__(self, session):
-        super().__init__()
         self.session = session
 
-    def _add(self, product: model.Product):
+    def add(self, product: model.Product):
         self.session.add(product)
 
-    def _get(self, sku):
+    def get(self, sku):
         return self.session.query(model.Product).filter_by(sku=sku).first()
 
     def list(self):

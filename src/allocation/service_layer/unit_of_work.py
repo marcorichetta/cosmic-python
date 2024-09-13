@@ -1,4 +1,5 @@
 import abc
+from typing import Protocol
 
 from allocation.adapters import repository
 from sqlalchemy.orm import sessionmaker
@@ -14,10 +15,10 @@ DEFAULT_SESSION_FACTORY = sessionmaker(
 )
 
 
-class AbstractUnitOfWork(abc.ABC):
+class AbstractUnitOfWork(Protocol):
     """The UoW handles the interaction with the DB and the service layer"""
 
-    products: repository.AbstractProductRepository
+    products: repository.AbstractRepository
 
     def __enter__(self) -> "AbstractUnitOfWork":
         return self
@@ -52,7 +53,9 @@ class SqlAlchemyUnitOfWork(AbstractUnitOfWork):
 
     def __enter__(self):
         self.session = self.session_factory()
-        self.products = repository.SqlAlchemyRepository(self.session)
+        self.products = repository.TrackingRepository(
+            repository.SqlAlchemyRepository(self.session)
+        )
         return super().__enter__()
 
     def __exit__(self, *args):
