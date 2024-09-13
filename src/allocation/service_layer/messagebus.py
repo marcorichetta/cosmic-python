@@ -1,6 +1,6 @@
 from typing import Callable, Dict, List, Type
+from allocation.adapters import email
 from allocation.domain import events
-from allocation.service_layer import email
 
 
 def handle(event: events.Event):
@@ -9,7 +9,7 @@ def handle(event: events.Event):
 
 
 def send_out_of_stock_notification(event: events.OutOfStock):
-    email.send_email(
+    email.send_mail(
         "stock@made.com",
         f"Out of stock for {event.sku}",
     )

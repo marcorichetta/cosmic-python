@@ -39,6 +39,7 @@ class SqlAlchemyRepository:
     """
 
     def __init__(self, session):
+        super().__init__()
         self.session = session
 
     def add(self, product: model.Product):

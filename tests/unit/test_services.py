@@ -1,3 +1,4 @@
+from unittest import mock
 import pytest
 from allocation.domain import model
 from allocation.adapters import repository
@@ -73,41 +74,14 @@ def test_allocate_commits():
     assert uow.committed
 
 
-@pytest.mark.skip("deallocation wip")
-def test_deallocate_decrements_available_quantity():
+def test_sends_email_on_out_of_stock_error():
     uow = FakeUnitOfWork()
-    services.add_batch("b1", "BLUE-PLINTH", 100, None, uow)
+    sku = "POPULAR-CURTAINS"
+    services.add_batch("b1", sku, 9, None, uow)
 
-    services.allocate("o1", "BLUE-PLINTH", 10, uow)
-    batch = uow.products.get(sku="BLUE-PLINTH")
-    assert batch.available_quantity == 90
-    services.deallocate("o1", "BLUE-PLINTH", 10, uow)
-    assert batch.available_quantity == 100
-
-
-@pytest.mark.skip("deallocation wip")
-def test_deallocate_decrements_correct_quantity():
-    uow = FakeUnitOfWork()
-
-    # Add two different batches
-    services.add_batch("b1", "RED-PLINTH", 100, None, uow)
-    services.add_batch("b2", "BLUE-PLINTH", 100, None, uow)
-
-    # Allocate one line
-    services.allocate("o1", "BLUE-PLINTH", 10, uow)
-
-    # Check that we decrement the BLUE-PLINTH line
-    b2 = uow.products.get(reference="b2")
-    assert b2.available_quantity == 90
-    services.deallocate("o1", "BLUE-PLINTH", 10, uow)
-    assert b2.available_quantity == 100
-
-
-@pytest.mark.skip("deallocation wip")
-def test_trying_to_deallocate_unallocated_batch():
-    uow = FakeUnitOfWork()
-
-    with pytest.raises(
-        model.DeallocateBatch, match="unallocated batch for sku BLUE-PLINTH"
-    ):
-        services.deallocate("o1", "BLUE-PLINTH", 10, uow)
+    with mock.patch("allocation.adapters.email.send_mail") as mock_send_mail:
+        services.allocate("o1", sku, 10, uow)
+        assert mock_send_mail.call_args == mock.call(
+            "stock@made.com",
+            f"Out of stock for {sku}",
+        )
