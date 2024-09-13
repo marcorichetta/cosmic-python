@@ -53,7 +53,7 @@ def start_mappers():
             )
         },
     )
-    products_mapper = mapper(
+    mapper(
         model.Product,
         products,
         properties={

@@ -1,9 +1,8 @@
 from __future__ import annotations
-from typing import Optional, TYPE_CHECKING
+from typing import Optional
 from datetime import date
 
 from allocation.domain import model
-from allocation.service_layer import messagebus
 from allocation.service_layer.unit_of_work import AbstractUnitOfWork
 
 

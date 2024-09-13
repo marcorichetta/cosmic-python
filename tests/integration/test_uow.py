@@ -2,7 +2,6 @@
 import threading
 import time
 import traceback
-from typing import List
 import pytest
 from allocation.domain import model
 from allocation.service_layer import unit_of_work
