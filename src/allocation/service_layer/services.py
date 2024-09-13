@@ -51,14 +51,3 @@ def allocate(
         batchref = product.allocate(line)
         uow.commit()
         return batchref
-
-
-def deallocate(orderid: str, sku: str, qty: int, uow: AbstractUnitOfWork) -> None:
-    """Deallocates a previously allocated orderline"""
-
-    with uow:
-        batches = uow.products.list()
-
-        line = model.OrderLine(orderid, sku, qty)
-        model.Product.deallocate(line, batches)
-        uow.commit()

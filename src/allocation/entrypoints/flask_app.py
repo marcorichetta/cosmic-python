@@ -47,20 +47,3 @@ def allocate():
         return {"message": str(e)}, 400
 
     return {"ref": ref}, 201
-
-
-@app.route("/deallocate", methods=["POST"])
-def deallocate():
-    uow = unit_of_work.SqlAlchemyUnitOfWork()
-
-    try:
-        services.deallocate(
-            request.json["orderid"],
-            request.json["sku"],
-            100,  # HACK - Hardcoded - quantity plays a role in equality for OrderLines. Either pass it from the test or get it from the existent one
-            uow,
-        )
-    except (model.DeallocateBatch, services.InvalidSku) as e:
-        return {"message": str(e)}, 400
-
-    return {"message": "ok"}, 200

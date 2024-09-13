@@ -17,9 +17,6 @@ class FakeRepository(repository.AbstractRepository):
     def get(self, sku):
         return next((p for p in self._products if p.sku == sku), None)
 
-    def list(self):
-        return list(self._products)
-
     @staticmethod
     def for_batch(ref: str, sku: str, qty: int, eta=None):
         return FakeRepository([model.Batch(ref, sku, qty, eta)])

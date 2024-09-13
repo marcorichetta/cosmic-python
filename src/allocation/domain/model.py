@@ -13,9 +13,6 @@ logger = logging.getLogger()
 class OutOfStock(Exception): ...
 
 
-class DeallocateBatch(Exception): ...
-
-
 @dataclass(unsafe_hash=True)
 class OrderLine:
     """
@@ -61,10 +58,6 @@ class Batch:
         if self.can_allocate(line):
             self._allocations.add(line)
 
-    def deallocate(self, line: OrderLine) -> None:
-        if line in self._allocations:
-            self._allocations.remove(line)
-
     def can_allocate(self, line: OrderLine) -> bool:
         return self.sku == line.sku and self.available_quantity >= line.qty
 
@@ -108,12 +101,3 @@ class Product:
         except StopIteration:
             self.events.append(events.OutOfStock(line.sku))
             return None
-
-    def deallocate(self, line: OrderLine):
-        try:
-            batch: Batch = next(b for b in self.batches if b.sku == line.sku)
-            batch.deallocate(line)
-        except StopIteration:
-            raise DeallocateBatch(
-                f"Attempting to deallocate an unallocated batch for sku {line.sku}"
-            ) from None

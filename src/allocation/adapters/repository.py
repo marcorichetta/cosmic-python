@@ -47,6 +47,3 @@ class SqlAlchemyRepository:
 
     def get(self, sku):
         return self.session.query(model.Product).filter_by(sku=sku).first()
-
-    def list(self):
-        return self.session.query(model.Product).all()
