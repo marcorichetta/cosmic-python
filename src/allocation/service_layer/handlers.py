@@ -1,8 +1,8 @@
 from __future__ import annotations
-from typing import Optional
-from datetime import date
 
+from allocation.adapters import email
 from allocation.domain import model
+from allocation.domain.events import AllocationRequired, BatchCreated, OutOfStock
 from allocation.service_layer.unit_of_work import AbstractUnitOfWork
 
 
@@ -15,33 +15,28 @@ def is_valid_sku(sku, batches):
 
 
 def add_batch(
-    reference: str,
-    sku: str,
-    quantity: int,
-    eta: Optional[date],
+    event: BatchCreated,
     uow: AbstractUnitOfWork,
 ):
     """Creates a new Batch and saves it to the repository"""
 
     with uow:
-        product = uow.products.get(sku=sku)
+        product = uow.products.get(sku=event.sku)
         if product is None:
-            product = model.Product(sku=sku, batches=[])
+            product = model.Product(sku=event.sku, batches=[])
             uow.products.add(product)
-        batch = model.Batch(reference, sku, quantity, eta)
+        batch = model.Batch(event.reference, event.sku, event.quantity, event.eta)
 
         product.batches.append(batch)
         uow.commit()
 
 
 def allocate(
-    orderid: str,
-    sku: str,
-    qty: int,
+    event: AllocationRequired,
     uow: AbstractUnitOfWork,
 ) -> str:
     """Allocates an orderline from available batches"""
-    line = model.OrderLine(orderid, sku, qty)
+    line = model.OrderLine(event.orderid, event.sku, event.quantity)
 
     with uow:
         product = uow.products.get(sku=line.sku)
@@ -50,3 +45,10 @@ def allocate(
         batchref = product.allocate(line)
         uow.commit()
         return batchref
+
+
+def send_out_of_stock_notification(event: OutOfStock, uow: AbstractUnitOfWork):
+    email.send_mail(
+        "stock@made.com",
+        f"Out of stock for {event.sku}",
+    )

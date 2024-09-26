@@ -2,7 +2,7 @@ from datetime import datetime
 from flask import Flask, request
 
 from allocation.adapters import orm
-from allocation.service_layer import services, unit_of_work
+from allocation.service_layer import handlers, unit_of_work
 
 import logging
 
@@ -21,7 +21,7 @@ def add_batch():
         eta = datetime.fromisoformat(eta).date()
 
     try:
-        ref = services.add_batch(
+        ref = handlers.add_batch(
             request.json["ref"], request.json["sku"], request.json["qty"], eta, uow
         )
 
@@ -37,13 +37,13 @@ def allocate():
     uow = unit_of_work.SqlAlchemyUnitOfWork()
 
     try:
-        ref = services.allocate(
+        ref = handlers.allocate(
             request.json["orderid"],
             request.json["sku"],
             request.json["qty"],
             uow,
         )
-    except services.InvalidSku as e:
+    except handlers.InvalidSku as e:
         return {"message": str(e)}, 400
 
     return {"ref": ref}, 201

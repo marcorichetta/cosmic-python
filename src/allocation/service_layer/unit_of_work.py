@@ -5,7 +5,6 @@ from allocation.adapters import repository
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine import create_engine
 import allocation.config as config
-from allocation.service_layer import messagebus
 
 DEFAULT_SESSION_FACTORY = sessionmaker(
     bind=create_engine(
@@ -28,13 +27,16 @@ class AbstractUnitOfWork(Protocol):
 
     def commit(self):
         self._commit()
-        self.publish_events()
 
-    def publish_events(self):
+    def collect_new_events(self):
+        """Collects events from products and makes them available (yield)
+
+        Yields:
+            Event: dispatched by a product
+        """
         for product in self.products.seen:
             while product.events:
-                event = product.events.pop(0)
-                messagebus.handle(event)
+                yield product.events.pop(0)
 
     @abc.abstractmethod
     def _commit(self):

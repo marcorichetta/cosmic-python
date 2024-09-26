@@ -6,9 +6,11 @@ from allocation.domain import model
 class AbstractRepository(Protocol):
     """Simplest abstract repository"""
 
+    # seen: Set[model.Product]
+
     def add(self, product: model.Product): ...
 
-    def get(self, sku) -> model.Product: ...
+    def get(self, sku: str) -> model.Product: ...
 
 
 class TrackingRepository:
