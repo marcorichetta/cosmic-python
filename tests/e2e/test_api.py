@@ -1,6 +1,8 @@
+import uuid
+
 import pytest
 import requests
-import uuid
+
 from allocation import config
 
 
@@ -26,6 +28,7 @@ def post_to_add_batch(ref, sku, qty, eta):
         f"{url}/batches", json={"ref": ref, "sku": sku, "qty": qty, "eta": eta}
     )
     assert r.status_code == 201
+    assert r.json()["ref"] == ref
 
 
 @pytest.mark.usefixtures("postgres_db")

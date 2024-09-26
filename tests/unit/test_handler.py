@@ -59,7 +59,7 @@ class TestAllocate:
             events.AllocationRequired("o1", "COMPLICATED-LAMP", 10), uow
         )
 
-        assert result == ["b1"]
+        assert result.pop(0) == "b1"
 
     def test_allocate_errors_for_invalid_sku(self):
         uow = FakeUnitOfWork()

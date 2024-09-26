@@ -1,10 +1,11 @@
+import logging
 from datetime import datetime
+
 from flask import Flask, request
 
 from allocation.adapters import orm
-from allocation.service_layer import handlers, unit_of_work
-
-import logging
+from allocation.domain import events
+from allocation.service_layer import handlers, messagebus, unit_of_work
 
 logger = logging.getLogger(__name__)
 
@@ -21,15 +22,17 @@ def add_batch():
         eta = datetime.fromisoformat(eta).date()
 
     try:
-        ref = handlers.add_batch(
-            request.json["ref"], request.json["sku"], request.json["qty"], eta, uow
+        event = events.BatchCreated(
+            request.json["ref"], request.json["sku"], request.json["qty"], eta
         )
+
+        [reference] = messagebus.handle(event, uow)
 
     except Exception as e:
         logger.exception(e)
         return {"message": str(e)}, 400
 
-    return {"ref": ref}, 201
+    return {"ref": reference}, 201
 
 
 @app.route("/allocate", methods=["POST"])
@@ -37,12 +40,13 @@ def allocate():
     uow = unit_of_work.SqlAlchemyUnitOfWork()
 
     try:
-        ref = handlers.allocate(
+        event = events.AllocationRequired(
             request.json["orderid"],
             request.json["sku"],
             request.json["qty"],
-            uow,
         )
+        results = messagebus.handle(event, uow)
+        ref = results.pop(0)
     except handlers.InvalidSku as e:
         return {"message": str(e)}, 400
 

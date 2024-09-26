@@ -17,8 +17,12 @@ def is_valid_sku(sku, batches):
 def add_batch(
     event: BatchCreated,
     uow: AbstractUnitOfWork,
-):
-    """Creates a new Batch and saves it to the repository"""
+) -> str:
+    """Creates a new Batch and saves it to the repository
+
+    Retuns:
+        str: Batch reference
+    """
 
     with uow:
         product = uow.products.get(sku=event.sku)
@@ -26,9 +30,9 @@ def add_batch(
             product = model.Product(sku=event.sku, batches=[])
             uow.products.add(product)
         batch = model.Batch(event.reference, event.sku, event.quantity, event.eta)
-
         product.batches.append(batch)
         uow.commit()
+        return batch.reference
 
 
 def allocate(
