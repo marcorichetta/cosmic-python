@@ -87,7 +87,7 @@ class TestChangeBatchQuantity:
         assert batch1.available_quantity == 10
         assert batch2.available_quantity == 50
 
-        messagebus.handle(events.BatchQuantityChanged("batch2", 25), uow)
+        messagebus.handle(events.BatchQuantityChanged("batch1", 25), uow)
 
         # order1 or order2 will be deallocated, so we'll have 25 - 20
         assert batch1.available_quantity == 5
