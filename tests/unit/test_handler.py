@@ -1,9 +1,10 @@
+from datetime import date
 from unittest import mock
 
 import pytest
 
 from allocation.adapters import repository
-from allocation.domain import events, model
+from allocation.domain import events
 from allocation.service_layer import handlers, messagebus
 from allocation.service_layer.unit_of_work import AbstractUnitOfWork
 
@@ -19,9 +20,15 @@ class FakeRepository(repository.AbstractRepository):
     def get(self, sku):
         return next((p for p in self._products if p.sku == sku), None)
 
-    @staticmethod
-    def for_batch(ref: str, sku: str, qty: int, eta=None):
-        return FakeRepository([model.Batch(ref, sku, qty, eta)])
+    def get_by_batchref(self, ref: str):
+        return next(
+            (
+                prod
+                for prod in self._products
+                for batch in prod.batches
+                if batch.reference == ref
+            )
+        )
 
 
 class FakeUnitOfWork(AbstractUnitOfWork):
@@ -49,6 +56,43 @@ class TestAddBatch:
         messagebus.handle(events.BatchCreated("b1", "GARISH-RUG", 100, None), uow)
         messagebus.handle(events.BatchCreated("b2", "GARISH-RUG", 99, None), uow)
         assert "b2" in [b.reference for b in uow.products.get("GARISH-RUG").batches]
+
+
+class TestChangeBatchQuantity:
+    def test_changes_available_quantity(self):
+        uow = FakeUnitOfWork()
+        sku = "CRUNCHY-ARMCHAIR"
+        messagebus.handle(events.BatchCreated("b1", sku, 100, None), uow)
+
+        [batch] = uow.products.get(sku).batches
+        assert batch.available_quantity == 100
+
+        messagebus.handle(events.BatchQuantityChanged("b1", 50), uow)
+
+        assert batch.available_quantity == 50
+
+    def test_reallocates_if_necessary(self):
+        uow = FakeUnitOfWork()
+        sku = "INDIFFERENT-TABLE"
+        event_history = [
+            events.BatchCreated("batch1", sku, 50, None),
+            events.BatchCreated("batch2", sku, 50, date.today()),
+            events.AllocationRequired("order1", sku, 20),  # batch1 == 30
+            events.AllocationRequired("order2", sku, 20),  # batch1 == 10
+        ]
+        for e in event_history:
+            messagebus.handle(e, uow)
+        [batch1, batch2] = uow.products.get(sku).batches
+
+        assert batch1.available_quantity == 10
+        assert batch2.available_quantity == 50
+
+        messagebus.handle(events.BatchQuantityChanged("batch2", 25), uow)
+
+        # order1 or order2 will be deallocated, so we'll have 25 - 20
+        assert batch1.available_quantity == 5
+        # and 20 will be reallocated to the next batch
+        assert batch2.available_quantity == 30
 
 
 class TestAllocate:

@@ -21,6 +21,7 @@ def handle(event: events.Event, uow: AbstractUnitOfWork):
 
 HANDLERS: Dict[Type[events.Event], List[Callable]] = {
     events.BatchCreated: [handlers.add_batch],
+    events.BatchQuantityChanged: [handlers.change_batch_quantity],
     events.AllocationRequired: [handlers.allocate],
     events.OutOfStock: [handlers.send_out_of_stock_notification],
 }

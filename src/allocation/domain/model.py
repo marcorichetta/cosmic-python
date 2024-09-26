@@ -1,9 +1,9 @@
 from __future__ import annotations
+
+import logging
 from dataclasses import dataclass
 from datetime import date
 from typing import List, Optional
-
-import logging
 
 from allocation.domain import events
 
@@ -61,6 +61,9 @@ class Batch:
     def can_allocate(self, line: OrderLine) -> bool:
         return self.sku == line.sku and self.available_quantity >= line.qty
 
+    def deallocate_one(self) -> OrderLine:
+        return self._allocations.pop()
+
     @property
     def allocated_quantity(self) -> int:
         return sum(line.qty for line in self._allocations)
@@ -101,3 +104,16 @@ class Product:
         except StopIteration:
             self.events.append(events.OutOfStock(line.sku))
             return None
+
+    def change_batch_quantity(self, reference: str, quantity: int):
+        """Changes the quantity of the batch that matches reference.
+        If batch available qty is lower than 0, it deallocates one batch and fires an event
+        """
+        batch: Batch = next(b for b in self.batches if b.reference == reference)
+        batch._purchased_quantity = quantity
+
+        while batch.available_quantity < 0:
+            line = batch.deallocate_one()
+            self.events.append(
+                events.AllocationRequired(line.orderid, line.sku, line.qty)
+            )

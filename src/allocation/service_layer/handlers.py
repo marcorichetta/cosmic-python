@@ -2,7 +2,12 @@ from __future__ import annotations
 
 from allocation.adapters import email
 from allocation.domain import model
-from allocation.domain.events import AllocationRequired, BatchCreated, OutOfStock
+from allocation.domain.events import (
+    AllocationRequired,
+    BatchCreated,
+    BatchQuantityChanged,
+    OutOfStock,
+)
 from allocation.service_layer.unit_of_work import AbstractUnitOfWork
 
 
@@ -56,3 +61,12 @@ def send_out_of_stock_notification(event: OutOfStock, uow: AbstractUnitOfWork):
         "stock@made.com",
         f"Out of stock for {event.sku}",
     )
+
+
+def change_batch_quantity(event: BatchQuantityChanged, uow: AbstractUnitOfWork):
+    """Updates batch available quantity"""
+
+    with uow:
+        product = uow.products.get_by_batchref(event.reference)
+        product.change_batch_quantity(event.reference, quantity=event.quantity)
+        uow.commit()

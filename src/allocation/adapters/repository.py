@@ -1,5 +1,6 @@
 from typing import Protocol, Set
 
+from allocation.adapters import orm
 from allocation.domain import model
 
 
@@ -11,6 +12,8 @@ class AbstractRepository(Protocol):
     def add(self, product: model.Product): ...
 
     def get(self, sku: str) -> model.Product: ...
+
+    def get_by_batchref(self, ref: str) -> model.Product: ...
 
 
 class TrackingRepository:
@@ -34,6 +37,12 @@ class TrackingRepository:
             self.seen.add(product)
         return product
 
+    def get_by_batchref(self, ref: str) -> model.Product:
+        product = self._repo.get_by_batchref(ref)
+        if product:
+            self.seen.add(product)
+        return product
+
 
 class SqlAlchemyRepository:
     """
@@ -49,3 +58,12 @@ class SqlAlchemyRepository:
 
     def get(self, sku):
         return self.session.query(model.Product).filter_by(sku=sku).first()
+
+    def get_by_batchref(self, batchref: str):
+        """Gets a Product based on a batch reference"""
+        return (
+            self.session.query(model.Product)
+            .join(model.Batch)
+            .filter(orm.batches.c.reference == batchref)
+            .first()
+        )
