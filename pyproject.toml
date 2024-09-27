@@ -4,6 +4,12 @@ dynamic = ["readme"]
 version = "0.0.1"
 authors = [{ name="Marco Richetta", email="marcorichetta@gmail.com" }]
 requires-python = ">=3.9"
+dependencies = [
+    "flask>=2.3.2",
+    "psycopg2-binary>=2.9.7",
+    "requests>=2.32.3",
+    "sqlalchemy>=1.4.48",
+]
 
 [tool.ruff]
 # Enable flake8-bugbear (`B`) rules.
@@ -14,5 +20,6 @@ lint.ignore = ["E501"]
 
 [tool.uv]
 dev-dependencies = [
+    "pytest>=7.3.1",
     "ruff>=0.6.4",
 ]
