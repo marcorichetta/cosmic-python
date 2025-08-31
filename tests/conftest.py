@@ -5,9 +5,9 @@ from pathlib import Path
 import pytest
 import requests
 from requests.exceptions import ConnectionError
-from sqlalchemy.exc import OperationalError
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, clear_mappers
+from sqlalchemy.exc import OperationalError
+from sqlalchemy.orm import clear_mappers, sessionmaker
 
 from allocation import config
 from allocation.adapters.orm import metadata, start_mappers
@@ -78,3 +78,26 @@ def restart_api():
     (Path(__file__).parent / "../src/allocation/entrypoints/flask_app.py").touch()
     time.sleep(0.5)
     wait_for_webapp_to_come_up()
+
+
+@pytest.fixture
+def api_client():
+    class APIClient:
+        def post_to_add_batch(self, ref, sku, qty, eta):
+            url = config.get_api_url()
+            r = requests.post(
+                f"{url}/add_batch",
+                json={"ref": ref, "sku": sku, "qty": qty, "eta": eta},
+            )
+            assert r.status_code == 201
+            return r
+
+        def post_to_allocate(self, orderid, sku, qty):
+            url = config.get_api_url()
+            r = requests.post(
+                f"{url}/allocate", json={"orderid": orderid, "sku": sku, "qty": qty}
+            )
+            assert r.status_code == 201
+            return r
+
+    return APIClient()
