@@ -26,7 +26,7 @@ integration-tests: up
 	docker-compose run --rm --no-deps --entrypoint="uv run pytest" app /tests/integration
 
 e2e-tests: up
-	docker-compose run --rm --no-deps --entrypoint="uv run pytest" app /tests/e2e
+	docker-compose run --rm --entrypoint="uv run pytest" app /tests/e2e
 
 logs:
 	docker-compose logs app | tail -100
