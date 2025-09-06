@@ -3,6 +3,9 @@ from datetime import date
 from typing import Optional
 
 
+# Commands are used to express the intent to do something in the domain.
+# The system reacts to commands
+# If they fail, we raise an exception
 class Command:
     pass
 
