@@ -4,11 +4,11 @@ import time
 from pathlib import Path
 
 import pytest
+import redis
 import requests
-from requests.exceptions import ConnectionError
 from sqlalchemy import create_engine
-from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import clear_mappers, sessionmaker
+from tenacity import retry, stop_after_delay
 
 # Workaround Vscode python extension test discovery
 src_path = Path(__file__).parent.parent / "src"
@@ -37,25 +37,20 @@ def session(session_factory):
     return session_factory()
 
 
+@retry(stop=stop_after_delay(3))
 def wait_for_postgres_to_come_up(engine):
-    deadline = time.time() + 10
-    while time.time() < deadline:
-        try:
-            return engine.connect()
-        except OperationalError:
-            time.sleep(0.5)
-    pytest.fail("Postgres never came up")
+    return engine.connect()
 
 
+@retry(stop=stop_after_delay(3))
 def wait_for_webapp_to_come_up():
-    deadline = time.time() + 10
-    url = config.get_api_url()
-    while time.time() < deadline:
-        try:
-            return requests.get(url)
-        except ConnectionError:
-            time.sleep(0.5)
-    pytest.fail("API never came up")
+    return requests.get(config.get_api_url())
+
+
+@retry(stop=stop_after_delay(3))
+def wait_for_redis_to_come_up():
+    r = redis.Redis(**config.get_redis_host_and_port())
+    return r.ping()
 
 
 @pytest.fixture(scope="session")
