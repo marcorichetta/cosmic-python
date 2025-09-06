@@ -1,11 +1,26 @@
 import json
 
+import pytest
 from tenacity import Retrying, stop_after_delay
 
+from tests.conftest import wait_for_redis_to_come_up
+from tests.e2e.api_client import APIClient
+from tests.e2e.redis_client import RedisClient
 from tests.random_refs import random_batchref, random_orderid, random_sku
 
 
-def test_change_batch_quantity_leading_to_reallocation(api_client):
+@pytest.fixture
+def api_client():
+    return APIClient()
+
+
+@pytest.fixture
+def redis_client():
+    wait_for_redis_to_come_up()
+    return RedisClient()
+
+
+def test_change_batch_quantity_leading_to_reallocation(api_client, redis_client):
     # start with two batches and an order allocated to one of them
 
     orderid, sku = random_orderid(), random_sku()

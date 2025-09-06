@@ -2,7 +2,13 @@ import pytest
 import requests
 
 from allocation import config
+from tests.e2e.api_client import APIClient
 from tests.random_refs import random_batchref, random_orderid, random_sku
+
+
+@pytest.fixture
+def api_client():
+    return APIClient()
 
 
 @pytest.mark.usefixtures("postgres_db")

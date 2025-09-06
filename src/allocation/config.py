@@ -12,12 +12,10 @@ def get_postgres_uri():
 def get_api_url():
     host = os.environ.get("API_HOST", "localhost")
     port = 5005 if host == "localhost" else 80
-    print(f"API host is {host} port {port}")
     return f"http://{host}:{port}"
 
 
 def get_redis_host_and_port():
     host = os.environ.get("REDIS_HOST", "localhost")
     port = 6379
-    print(f"Redis host is {host} port {port}")
     return {"host": host, "port": port}
