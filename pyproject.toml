@@ -9,7 +9,7 @@ dependencies = [
     "psycopg2-binary>=2.9.7",
     "redis>=6.4.0",
     "requests>=2.32.3",
-    "sqlalchemy>=1.4.48",
+    "sqlalchemy==1.4.48",
     "tenacity>=9.1.2",
 ]
 

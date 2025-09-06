@@ -14,16 +14,19 @@ down:
 	docker-compose down --remove-orphans
 
 test: up
-	docker-compose run --rm --no-deps --entrypoint=pytest app /tests/unit /tests/integration /tests/e2e
+	docker-compose run --rm --no-deps --entrypoint="uv run pytest" app /tests/unit /tests/integration /tests/e2e
 
 unit-tests:
-	docker-compose run --rm --no-deps --entrypoint=pytest app /tests/unit
+	docker-compose run --rm --no-deps --entrypoint="uv run pytest" app /tests/unit
+
+failed-tests:
+	docker-compose run --rm --no-deps --entrypoint="uv run pytest --lf" app /tests/unit /tests/integration /tests/e2e
 
 integration-tests: up
-	docker-compose run --rm --no-deps --entrypoint=pytest app /tests/integration
+	docker-compose run --rm --no-deps --entrypoint="uv run pytest" app /tests/integration
 
 e2e-tests: up
-	docker-compose run --rm --no-deps --entrypoint=pytest app /tests/e2e
+	docker-compose run --rm --no-deps --entrypoint="uv run pytest" app /tests/e2e
 
 logs:
 	docker-compose logs app | tail -100
