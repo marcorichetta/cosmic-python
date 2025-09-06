@@ -3,10 +3,10 @@ import logging
 
 import redis
 
+from allocation import config
 from allocation.adapters import orm
 from allocation.domain import commands
 from allocation.service_layer import messagebus, unit_of_work
-from src.allocation import config
 
 r = redis.Redis(**config.get_redis_host_and_port())
 

@@ -2,6 +2,10 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Optional
 
+# Events are used to broadcast information about something that has happened in the domain.
+# They can trigger commands
+# They can fail silently
+
 
 class Event:
     """Base class for Domain Events"""
@@ -35,3 +39,11 @@ class AllocationRequired(Event):
 class BatchQuantityChanged(Event):
     reference: str
     quantity: int
+
+
+@dataclass
+class Allocated(Event):
+    orderid: str
+    sku: str
+    quantity: int
+    batchref: str

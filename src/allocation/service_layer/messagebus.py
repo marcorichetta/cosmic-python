@@ -73,6 +73,7 @@ def handle_command(
 
 
 EVENT_HANDLERS: Dict[Type[events.Event], List[Callable]] = {
+    events.Allocated: [handlers.publish_allocated_event],
     events.BatchCreated: [handlers.add_batch],
     events.BatchQuantityChanged: [handlers.change_batch_quantity],
     events.AllocationRequired: [handlers.allocate],
