@@ -23,13 +23,13 @@ def test_happy_path_returns_201_and_allocated_batch(api_client):
 
     r = api_client.post_to_allocate(random_orderid(), sku, 3)
 
-    assert r.status_code == 201
+    assert r.status_code == 202
     assert r.json()["batchref"] == earlybatch
 
 
 @pytest.mark.usefixtures("restart_api")
 def test_unhappy_path_returns_400_and_error_message(api_client):
     unknown_sku, orderid = random_sku(), random_orderid()
-    r = api_client.post_to_allocate(orderid, unknown_sku, 20)
+    r = api_client.post_to_allocate(orderid, unknown_sku, qty=20, expect_success=False)
     assert r.status_code == 400
     assert r.json()["message"] == f"Invalid sku {unknown_sku}"
