@@ -24,7 +24,7 @@ def test_happy_path_returns_201_and_allocated_batch(api_client):
     r = api_client.post_to_allocate(random_orderid(), sku, 3)
 
     assert r.status_code == 201
-    assert r.json()["ref"] == earlybatch
+    assert r.json()["batchref"] == earlybatch
 
 
 @pytest.mark.usefixtures("restart_api")
