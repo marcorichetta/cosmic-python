@@ -1,10 +1,11 @@
 import abc
 from typing import Protocol
 
-from allocation.adapters import repository
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine import create_engine
+from sqlalchemy.orm import Session, sessionmaker
+
 import allocation.config as config
+from allocation.adapters import repository
 
 DEFAULT_SESSION_FACTORY = sessionmaker(
     bind=create_engine(
@@ -54,10 +55,11 @@ class SqlAlchemyUnitOfWork(AbstractUnitOfWork):
         self.session_factory = session_factory
 
     def __enter__(self):
-        self.session = self.session_factory()
+        self.session: Session = self.session_factory()
         self.products = repository.TrackingRepository(
             repository.SqlAlchemyRepository(self.session)
         )
+
         return super().__enter__()
 
     def __exit__(self, *args):

@@ -7,13 +7,13 @@ from allocation.domain import model
 class AbstractRepository(Protocol):
     """Simplest abstract repository"""
 
-    # seen: Set[model.Product]
+    seen: Set[model.Product] = set()
 
     def add(self, product: model.Product): ...
 
-    def get(self, sku: str) -> model.Product: ...
+    def get(self, sku: str) -> model.Product | None: ...
 
-    def get_by_batchref(self, ref: str) -> model.Product: ...
+    def get_by_batchref(self, batchref: str) -> model.Product | None: ...
 
 
 class TrackingRepository:
@@ -31,14 +31,14 @@ class TrackingRepository:
         self._repo.add(product)
         self.seen.add(product)
 
-    def get(self, sku) -> model.Product:
+    def get(self, sku) -> model.Product | None:
         product = self._repo.get(sku)
         if product:
             self.seen.add(product)
         return product
 
-    def get_by_batchref(self, ref: str) -> model.Product:
-        product = self._repo.get_by_batchref(ref)
+    def get_by_batchref(self, batchref: str) -> model.Product | None:
+        product = self._repo.get_by_batchref(batchref)
         if product:
             self.seen.add(product)
         return product
@@ -59,7 +59,7 @@ class SqlAlchemyRepository:
     def get(self, sku):
         return self.session.query(model.Product).filter_by(sku=sku).first()
 
-    def get_by_batchref(self, batchref: str):
+    def get_by_batchref(self, batchref: str) -> model.Product:
         """Gets a Product based on a batch reference"""
         return (
             self.session.query(model.Product)

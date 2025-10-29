@@ -4,7 +4,7 @@ from unittest import mock
 import pytest
 
 from allocation.adapters import repository
-from allocation.domain import commands
+from allocation.domain import commands, model
 from allocation.service_layer import handlers, messagebus
 from allocation.service_layer.unit_of_work import AbstractUnitOfWork
 
@@ -17,16 +17,16 @@ class FakeRepository(repository.AbstractRepository):
     def add(self, product):
         self._products.add(product)
 
-    def get(self, sku):
+    def get(self, sku) -> model.Product | None:
         return next((p for p in self._products if p.sku == sku), None)
 
-    def get_by_batchref(self, ref: str):
+    def get_by_batchref(self, batchref: str):
         return next(
             (
                 prod
                 for prod in self._products
                 for batch in prod.batches
-                if batch.reference == ref
+                if batch.reference == batchref
             )
         )
 
