@@ -1,5 +1,13 @@
-pytest==7.3.1
-sqlalchemy==1.4.48
-flask==2.3.2
-psycopg2-binary==2.9.7
-requests==2.31.0
+# app
+sqlalchemy
+flask
+psycopg2-binary
+redis
+
+# dev/tests
+pytest
+pytest-icdiff
+mypy
+pylint
+requests
+tenacity

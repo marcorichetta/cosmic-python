@@ -8,7 +8,7 @@ build:
 	docker-compose build
 
 up:
-	docker-compose up -d app
+	docker-compose up -d
 
 down:
 	docker-compose down --remove-orphans
@@ -29,7 +29,7 @@ e2e-tests: up
 	docker-compose run --rm --entrypoint="uv run pytest" app /tests/e2e
 
 logs:
-	docker-compose logs app | tail -100
+	docker-compose logs --tail=25 api redis_pubsub
 
 black:
 	black -l 86 $$(find * -name '*.py')

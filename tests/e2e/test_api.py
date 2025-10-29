@@ -39,3 +39,6 @@ def test_unhappy_path_returns_400_and_error_message(api_client):
 
     r = api_client.get_allocation(orderid)
     assert r.status_code == 404
+
+    r = api_client.get_allocation(orderid)
+    assert r.status_code == 404

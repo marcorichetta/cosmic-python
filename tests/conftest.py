@@ -17,6 +17,8 @@ sys.path.insert(0, str(src_path))
 from allocation import config
 from allocation.adapters.orm import metadata, start_mappers
 
+pytest.register_assert_rewrite("tests.e2e.api_client")
+
 
 @pytest.fixture
 def in_memory_db():
@@ -26,19 +28,20 @@ def in_memory_db():
 
 
 @pytest.fixture
-def session_factory(in_memory_db):
+def sqlite_session_factory(in_memory_db):
     start_mappers()
     yield sessionmaker(bind=in_memory_db)
     clear_mappers()
 
 
 @pytest.fixture
-def session(session_factory):
-    return session_factory()
+def sqlite_session(sqlite_session_factory):
+    return sqlite_session_factory()
 
 
 @retry(stop=stop_after_delay(3))
 def wait_for_postgres_to_come_up(engine):
+    return engine.connect()
     return engine.connect()
 
 
@@ -78,3 +81,15 @@ def restart_api():
     (Path(__file__).parent / "../src/allocation/entrypoints/flask_app.py").touch()
     time.sleep(0.5)
     wait_for_webapp_to_come_up()
+
+
+@pytest.fixture
+def restart_redis_pubsub():
+    wait_for_redis_to_come_up()
+    if not shutil.which("docker-compose"):
+        print("skipping restart, assumes running in container")
+        return
+    subprocess.run(
+        ["docker-compose", "restart", "-t", "0", "redis_pubsub"],
+        check=True,
+    )
