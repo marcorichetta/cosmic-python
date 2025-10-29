@@ -20,9 +20,11 @@ def redis_client():
     return RedisClient()
 
 
-@pytest.mark.skip(
-    reason="Por alguna razón subscription.get_message(timeout=1) no devuelve mensajes"
-)
+# Debugging with `docker compose exec redis redis-cli MONITOR`
+@pytest.mark.skip("Still not sure why no messages are get from Redis")
+@pytest.mark.usefixtures("postgres_db")
+@pytest.mark.usefixtures("restart_api")
+@pytest.mark.usefixtures("restart_redis_pubsub")
 def test_change_batch_quantity_leading_to_reallocation(api_client, redis_client):
     # start with two batches and an order allocated to one of them
 
@@ -31,7 +33,10 @@ def test_change_batch_quantity_leading_to_reallocation(api_client, redis_client)
     api_client.post_to_add_batch(earlier_batch, sku, 10, "2011-01-01")
     api_client.post_to_add_batch(later_batch, sku, 10, "2011-01-02")
     response = api_client.post_to_allocate(orderid, sku, 10)
-    assert response.json()["batchref"] == earlier_batch
+    assert response.ok
+
+    response = api_client.get_allocation(orderid)
+    assert response.json()[0]["batchref"] == earlier_batch
 
     # redis_client is able to send/receive msgs from Redis channels
     # Listen to "line_allocated" channel
@@ -44,7 +49,9 @@ def test_change_batch_quantity_leading_to_reallocation(api_client, redis_client)
     messages = []
     for attempt in Retrying(stop=stop_after_delay(3), reraise=True):
         with attempt:
-            message = subscription.get_message(timeout=1)
+            message = subscription.get_message(
+                timeout=1
+            )  # TODO: Still not sure why no messages are get here
             if message:
                 messages.append(message)
                 print(messages)
