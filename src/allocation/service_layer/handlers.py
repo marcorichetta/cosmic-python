@@ -67,7 +67,7 @@ def reallocate(event: Deallocated, uow: AbstractUnitOfWork):
 
 
 def send_out_of_stock_notification(event: OutOfStock, uow: AbstractUnitOfWork):
-    email.send_mail(
+    email.send(
         "stock@made.com",
         f"Out of stock for {event.sku}",
     )

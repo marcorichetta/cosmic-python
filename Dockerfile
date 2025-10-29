@@ -13,5 +13,5 @@ COPY src/ src/
 RUN uv pip install --no-deps -e src/ 
 COPY tests/ tests/
 
-ENV FLASK_APP=src/allocation/entrypoints/flask_app.py FLASK_DEBUG=1 PYTHONUNBUFFERED=1
-CMD uv run flask run --host=0.0.0.0 --port=80
+# ENTRYPOINT [ "bash" ]
+# WORKDIR /src

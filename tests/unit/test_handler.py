@@ -127,7 +127,7 @@ def test_sends_email_on_out_of_stock_error():
     sku = "POPULAR-CURTAINS"
     messagebus.handle(commands.CreateBatch("b1", sku, 9, None), uow)
 
-    with mock.patch("allocation.adapters.email.send_mail") as mock_send_mail:
+    with mock.patch("allocation.adapters.email.send") as mock_send_mail:
         messagebus.handle(commands.Allocate("o1", sku, 10), uow)
         assert mock_send_mail.call_args == mock.call(
             "stock@made.com",

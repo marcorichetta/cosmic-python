@@ -81,9 +81,6 @@ EVENT_HANDLERS: Dict[Type[events.Event], List[Callable]] = {
         handlers.remove_allocation_from_read_model,
         handlers.reallocate,
     ],
-    events.BatchCreated: [handlers.add_batch],
-    events.BatchQuantityChanged: [handlers.change_batch_quantity],
-    events.AllocationRequired: [handlers.allocate],
     events.OutOfStock: [handlers.send_out_of_stock_notification],
 }
 

@@ -1,6 +1,7 @@
 from datetime import date, timedelta
+
 from allocation.domain import events
-from allocation.domain.model import Product, OrderLine, Batch
+from allocation.domain.model import Batch, OrderLine, Product
 
 today = date.today()
 tomorrow = today + timedelta(days=1)
@@ -48,7 +49,7 @@ def test_outputs_allocated_event():
     product = Product(sku="RETRO-LAMPSHADE", batches=[batch])
     product.allocate(line)
     expected = events.Allocated(
-        orderid="oref", sku="RETRO-LAMPSHADE", qty=10, batchref=batch.reference
+        orderid="oref", sku="RETRO-LAMPSHADE", quantity=10, batchref=batch.reference
     )
     assert product.events[-1] == expected
 
