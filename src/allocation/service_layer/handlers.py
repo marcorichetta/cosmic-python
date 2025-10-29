@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import asdict
+
 from allocation.adapters import email
 from allocation.domain import model
 from allocation.domain.events import (
@@ -7,6 +9,7 @@ from allocation.domain.events import (
     AllocationRequired,
     BatchCreated,
     BatchQuantityChanged,
+    Deallocated,
     OutOfStock,
 )
 from allocation.entrypoints import redis_eventpublisher
@@ -58,6 +61,11 @@ def allocate(
         return batchref
 
 
+def reallocate(event: Deallocated, uow: AbstractUnitOfWork):
+    """Reallocates a batch that has been returned"""
+    allocate(AllocationRequired(**asdict(event)), uow=uow)
+
+
 def send_out_of_stock_notification(event: OutOfStock, uow: AbstractUnitOfWork):
     email.send_mail(
         "stock@made.com",
@@ -76,3 +84,29 @@ def change_batch_quantity(event: BatchQuantityChanged, uow: AbstractUnitOfWork):
 
 def publish_allocated_event(event: Allocated, uow: AbstractUnitOfWork):
     redis_eventpublisher.publish("line_allocated", event)
+
+
+def add_allocation_to_read_model(event: Allocated, uow: AbstractUnitOfWork):
+    with uow:
+        uow.session.execute(
+            """
+            INSERT INTO allocations_view (orderid, sku, batchref)
+            VALUES (:orderid, :sku, :batchref)
+            """,
+            dict(orderid=event.orderid, sku=event.sku, batchref=event.batchref),
+        )
+
+        uow.commit()
+
+
+def remove_allocation_from_read_model(event: Deallocated, uow: AbstractUnitOfWork):
+    with uow:
+        uow.session.execute(
+            """
+            DELETE FROM allocations_view
+            WHERE orderid = :orderid AND sku = :sku
+            """,
+            dict(orderid=event.orderid, sku=event.sku),
+        )
+
+        uow.commit()

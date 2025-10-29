@@ -73,7 +73,14 @@ def handle_command(
 
 
 EVENT_HANDLERS: Dict[Type[events.Event], List[Callable]] = {
-    events.Allocated: [handlers.publish_allocated_event],
+    events.Allocated: [
+        handlers.publish_allocated_event,
+        handlers.add_allocation_to_read_model,
+    ],
+    events.Deallocated: [
+        handlers.remove_allocation_from_read_model,
+        handlers.reallocate,
+    ],
     events.BatchCreated: [handlers.add_batch],
     events.BatchQuantityChanged: [handlers.change_batch_quantity],
     events.AllocationRequired: [handlers.allocate],
