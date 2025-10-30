@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import asdict
+from typing import Callable, Dict, List, Type
 
 from allocation.adapters import email
-from allocation.domain import model
+from allocation.domain import commands, events, model
 from allocation.domain.events import (
     Allocated,
     AllocationRequired,
@@ -13,6 +14,7 @@ from allocation.domain.events import (
     OutOfStock,
 )
 from allocation.entrypoints import redis_eventpublisher
+from allocation.service_layer import handlers
 from allocation.service_layer.unit_of_work import AbstractUnitOfWork
 
 
@@ -110,3 +112,22 @@ def remove_allocation_from_read_model(event: Deallocated, uow: AbstractUnitOfWor
         )
 
         uow.commit()
+
+
+EVENT_HANDLERS: Dict[Type[events.Event], List[Callable]] = {
+    events.Allocated: [
+        handlers.publish_allocated_event,
+        handlers.add_allocation_to_read_model,
+    ],
+    events.Deallocated: [
+        handlers.remove_allocation_from_read_model,
+        handlers.reallocate,
+    ],
+    events.OutOfStock: [handlers.send_out_of_stock_notification],
+}
+
+COMMAND_HANDLERS: Dict[Type[commands.Command], Callable] = {
+    commands.Allocate: handlers.allocate,
+    commands.CreateBatch: handlers.add_batch,
+    commands.ChangeBatchQuantity: handlers.change_batch_quantity,
+}

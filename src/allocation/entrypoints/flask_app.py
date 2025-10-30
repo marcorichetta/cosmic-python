@@ -3,31 +3,28 @@ from datetime import datetime
 
 from flask import Flask, jsonify, request
 
-from allocation import views
-from allocation.adapters import orm
+from allocation import bootstrap, views
 from allocation.domain import commands
-from allocation.service_layer import handlers, messagebus, unit_of_work
+from allocation.service_layer import handlers, unit_of_work
 
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-orm.start_mappers()
+bus = bootstrap.bootstrap()
 
 
 @app.route("/batches", methods=["POST"])
 def add_batch():
-    uow = unit_of_work.SqlAlchemyUnitOfWork()
-
     eta = request.json["eta"]
     if eta is not None:
         eta = datetime.fromisoformat(eta).date()
 
     try:
-        event = commands.CreateBatch(
+        cmd = commands.CreateBatch(
             request.json["ref"], request.json["sku"], request.json["qty"], eta
         )
 
-        results = messagebus.handle(event, uow)
+        results = bus.handle(cmd)
         reference = results[0] if results else None
 
     except Exception as e:
@@ -42,12 +39,13 @@ def allocate():
     uow = unit_of_work.SqlAlchemyUnitOfWork()
 
     try:
-        event = commands.Allocate(
+        cmd = commands.Allocate(
             request.json["orderid"],
             request.json["sku"],
             request.json["qty"],
         )
-        results = messagebus.handle(event, uow)
+
+        results = bus.handle(cmd)
         batchref = results.pop(0)
     except handlers.InvalidSku as e:
         return {"message": str(e)}, 400

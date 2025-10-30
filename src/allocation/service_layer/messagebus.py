@@ -1,91 +1,83 @@
 import logging
-from typing import Callable, Dict, List, Type, Union
+from typing import Callable, Union
 
 from tenacity import RetryError, Retrying, stop_after_attempt, wait_exponential
 
 from allocation.domain import commands, events
-from allocation.service_layer import handlers
-from allocation.service_layer.unit_of_work import AbstractUnitOfWork
+from allocation.service_layer import unit_of_work
 
 logger = logging.getLogger(__name__)
 
 Message = Union[events.Event, commands.Command]
 
 
-def handle(message: Message, uow: AbstractUnitOfWork):
-    """Entrypoint for event handling. It creates a queue, passes the events to their
-    respective handlers and finally collects new events to repeat the process
-    """
-    results = []
-    queue = [message]
-    while queue:
-        message = queue.pop(0)
-        match message:
-            case events.Event():
-                # Fire and forget events
-                handle_event(message, queue, uow)
-            case commands.Command():
-                # We care about the result of commands
-                result = handle_command(message, queue, uow)
-                results.append(result)
-            case _:
-                raise Exception(f"{message} was not an Event or Command")
-    return results
+class MessageBus:
+    def __init__(
+        self,
+        uow: unit_of_work.AbstractUnitOfWork,
+        event_handlers: dict[type[events.Event], list[Callable]],
+        command_handlers: dict[type[commands.Command], Callable],
+    ) -> None:
+        self.uow = uow
+        self.event_handlers = event_handlers
+        self.command_handlers = command_handlers
 
+    def handle(self, message: Message):
+        """Entrypoint for event handling. It creates a queue, passes the events to their
+        respective handlers and finally collects new events to repeat the process
+        """
+        results = []
+        # Using self.queue like this is not thread-safe,
+        # which might be a problem if you’re using threads,
+        # because the bus instance is global in the Flask app context.
+        self.queue = [message]
+        while self.queue:
+            message = self.queue.pop(0)
+            match message:
+                case events.Event():
+                    # Fire and forget events
+                    self.handle_event(message)
+                case commands.Command():
+                    # We care about the result of commands
+                    result = self.handle_command(message)
+                    results.append(result)
+                case _:
+                    raise Exception(f"{message} was not an Event or Command")
+        return results
 
-def handle_event(
-    event: events.Event,
-    queue: List[Message],
-    uow: AbstractUnitOfWork,
-):
-    for handler in EVENT_HANDLERS[type(event)]:
+    def handle_event(
+        self,
+        event: events.Event,
+    ):
+        for handler in self.event_handlers[type(event)]:
+            try:
+                for attempt in Retrying(
+                    stop=stop_after_attempt(3), wait=wait_exponential()
+                ):
+                    with attempt:
+                        logger.debug(
+                            "Handling event %s with handler %s", event, handler
+                        )
+                        handler(event)
+                        self.queue.extend(self.uow.collect_new_events())
+            except RetryError as retry_failure:
+                logger.error(
+                    "Failed to handle event %s times, giving up!",
+                    retry_failure.last_attempt.attempt_number,
+                )
+
+                continue
+
+    def handle_command(
+        self,
+        command: commands.Command,
+    ):
+        logger.debug("Handling command %s", command)
         try:
-            for attempt in Retrying(
-                stop=stop_after_attempt(3), wait=wait_exponential()
-            ):
-                with attempt:
-                    logger.debug("Handling event %s with handler %s", event, handler)
-                    handler(event, uow)
-                    queue.extend(uow.collect_new_events())
-        except RetryError as retry_failure:
-            logger.error(
-                "Failed to handle event %s times, giving up!",
-                retry_failure.last_attempt.attempt_number,
-            )
-
-            continue
-
-
-def handle_command(
-    command: commands.Command,
-    queue: List[Message],
-    uow: AbstractUnitOfWork,
-):
-    logger.debug("Handling command %s", command)
-    try:
-        handler = COMMAND_HANDLERS[type(command)]
-        result = handler(command, uow)
-        queue.extend(uow.collect_new_events())
-        return result
-    except Exception:
-        logger.exception("Exception handling command %s", command)
-        raise
-
-
-EVENT_HANDLERS: Dict[Type[events.Event], List[Callable]] = {
-    events.Allocated: [
-        handlers.publish_allocated_event,
-        handlers.add_allocation_to_read_model,
-    ],
-    events.Deallocated: [
-        handlers.remove_allocation_from_read_model,
-        handlers.reallocate,
-    ],
-    events.OutOfStock: [handlers.send_out_of_stock_notification],
-}
-
-COMMAND_HANDLERS: Dict[Type[commands.Command], Callable] = {
-    commands.Allocate: handlers.allocate,
-    commands.CreateBatch: handlers.add_batch,
-    commands.ChangeBatchQuantity: handlers.change_batch_quantity,
-}
+            handler = self.command_handlers[type(command)]
+            result = handler(command)
+            self.queue.extend(self.uow.collect_new_events())
+            return result
+        except Exception:
+            logger.exception("Exception handling command %s", command)
+            raise
