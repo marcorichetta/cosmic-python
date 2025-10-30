@@ -10,6 +10,9 @@ from allocation.service_layer import unit_of_work
 
 from ..random_refs import random_batchref, random_orderid, random_sku
 
+# Use top level fixture to set up and tear down mappers for all tests in this module
+pytestmark = pytest.mark.usefixtures("mappers")
+
 
 def insert_batch(session, ref, sku, qty, eta, product_version=1):
     session.execute(
@@ -36,7 +39,6 @@ def get_allocated_batch_ref(session, orderid, sku):
     return batchref
 
 
-@pytest.mark.skip("Tengo que ejecutar start_mappers() en fixture")
 def test_uow_can_retrieve_a_batch_and_allocate_to_it(sqlite_session_factory):
     session = sqlite_session_factory()
     insert_batch(session, "batch1", "HIPSTER-WORKBENCH", 100, None)
