@@ -26,7 +26,6 @@ class MessageBus:
         """Entrypoint for event handling. It creates a queue, passes the events to their
         respective handlers and finally collects new events to repeat the process
         """
-        results = []
         # Using self.queue like this is not thread-safe,
         # which might be a problem if you’re using threads,
         # because the bus instance is global in the Flask app context.
@@ -39,11 +38,9 @@ class MessageBus:
                     self.handle_event(message)
                 case commands.Command():
                     # We care about the result of commands
-                    result = self.handle_command(message)
-                    results.append(result)
+                    self.handle_command(message)
                 case _:
                     raise Exception(f"{message} was not an Event or Command")
-        return results
 
     def handle_event(
         self,
@@ -75,9 +72,8 @@ class MessageBus:
         logger.debug("Handling command %s", command)
         try:
             handler = self.command_handlers[type(command)]
-            result = handler(command)
+            handler(command)
             self.queue.extend(self.uow.collect_new_events())
-            return result
         except Exception:
             logger.exception("Exception handling command %s", command)
             raise

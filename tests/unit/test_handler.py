@@ -121,9 +121,11 @@ class TestAllocate:
 
     def test_allocate_returns_allocation(self):
         self.bus.handle(commands.CreateBatch("b1", "COMPLICATED-LAMP", 100, None))
-        result = self.bus.handle(commands.Allocate("o1", "COMPLICATED-LAMP", 10))
+        self.bus.handle(commands.Allocate("o1", "COMPLICATED-LAMP", 10))
+        [batch] = self.bus.uow.products.get("COMPLICATED-LAMP").batches
 
-        assert result.pop(0) == "b1"
+        assert batch.available_quantity == 90
+        assert batch.reference == "b1"
 
     def test_allocate_errors_for_invalid_sku(self):
         self.bus.handle(commands.CreateBatch("b1", "AREALSKU", 100, None))
