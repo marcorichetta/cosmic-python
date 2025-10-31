@@ -16,7 +16,7 @@ def sqlite_bus(
     bus = bootstrap.bootstrap(
         start_orm=True,  # We do still want to start the ORM
         uow=unit_of_work.SqlAlchemyUnitOfWork(sqlite_session_factory),
-        send_mail=lambda *args: None,  # no emails
+        notifications_provider=lambda *args: None,  # no emails
         publish=lambda *args: None,
     )
     yield bus

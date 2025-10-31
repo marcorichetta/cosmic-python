@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict
 from typing import Callable, Dict, List, Type
 
-from allocation.adapters import email
+from allocation.adapters import notifications
 from allocation.domain import commands, events, model
 from allocation.domain.events import (
     Allocated,
@@ -68,11 +68,11 @@ def reallocate(event: Deallocated, uow: AbstractUnitOfWork):
     allocate(AllocationRequired(**asdict(event)), uow=uow)
 
 
-def send_out_of_stock_notification(event: OutOfStock, uow: AbstractUnitOfWork):
-    email.send(
-        "stock@made.com",
-        f"Out of stock for {event.sku}",
-    )
+def send_out_of_stock_notification(
+    event: OutOfStock,
+    notifications: notifications.AbstractNotifications,
+):
+    notifications.send("stock@made.com", f"Out of stock for {event.sku}")
 
 
 def change_batch_quantity(event: BatchQuantityChanged, uow: AbstractUnitOfWork):
