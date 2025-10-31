@@ -26,3 +26,8 @@ def get_email_host_and_port():
     port = 11025 if host == "localhost" else 1025
     http_port = 18025 if host == "localhost" else 8025
     return dict(host=host, port=port, http_port=http_port)
+
+
+ADMIN_EMAIL = "allocations@example.com"
+DISCORD_WEBHOOK_ID = "1433771199820988437"
+DISCORD_WEBHOOK_TOKEN = os.environ.get("DISCORD_WEBHOOK_TOKEN", "not-set")

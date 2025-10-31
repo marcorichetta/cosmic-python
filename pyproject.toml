@@ -5,6 +5,7 @@ version = "0.0.1"
 authors = [{ name="Marco Richetta", email="marcorichetta@gmail.com" }]
 requires-python = ">=3.9"
 dependencies = [
+    "apprise>=1.9.5",
     "flask>=2.3.2",
     "psycopg2-binary>=2.9.7",
     "redis>=6.4.0",

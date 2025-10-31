@@ -2,6 +2,7 @@ import pytest
 import requests
 from sqlalchemy.orm import clear_mappers
 
+import allocation.adapters.ADMIN_EMAIL
 from allocation import bootstrap, config
 from allocation.adapters import notifications
 from allocation.domain import commands
@@ -34,6 +35,26 @@ def test_out_of_stock_email(bus):
     bus.handle(commands.Allocate("order1", sku, 10))
     email = get_email_from_mailhog(sku)
 
-    assert email["Raw"]["From"] == notifications.ADMIN_EMAIL
+    assert email["Raw"]["From"] == allocation.adapters.ADMIN_EMAIL.ADMIN_EMAIL
     assert email["Raw"]["To"] == ["stock@made.com"]
     assert f"Out of stock for {sku}" in email["Raw"]["Data"]
+
+
+@pytest.fixture
+def discord_bus(sqlite_session_factory):
+    bus = bootstrap.bootstrap(
+        start_orm=True,
+        uow=unit_of_work.SqlAlchemyUnitOfWork(sqlite_session_factory),
+        notifications_provider=notifications.DiscordNotifications(),
+        publish=lambda *args: None,
+    )
+    yield bus
+    clear_mappers()
+
+
+def test_out_of_stock_discord(discord_bus):
+    sku = random_sku()
+    discord_bus.handle(commands.CreateBatch("batch1", sku, 9, None))
+    discord_bus.handle(commands.Allocate("order1", sku, 10))
+
+    # Discord notification testing to be implemented
