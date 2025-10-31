@@ -1,10 +1,10 @@
+from collections import defaultdict
 from datetime import date
-from unittest import mock
 
 import pytest
 
 from allocation import bootstrap
-from allocation.adapters import repository
+from allocation.adapters import notifications, repository
 from allocation.domain import commands, model
 from allocation.service_layer import handlers
 from allocation.service_layer.unit_of_work import AbstractUnitOfWork
@@ -44,17 +44,25 @@ class FakeUnitOfWork(AbstractUnitOfWork):
         pass
 
 
-def bootstrap_test_app():
+class FakeNotifications(notifications.AbstractNotifications):
+    def __init__(self):
+        self.sent: dict[str, list[str]] = defaultdict(list)
+
+    def send(self, destination, message):
+        self.sent[destination] = message
+
+
+def bootstrap_test_app(notifications: notifications.AbstractNotifications | None):
     return bootstrap.bootstrap(
         start_orm=False,  # We don't need an ORM for these tests
         uow=FakeUnitOfWork(),
-        send_mail=lambda *args: None,
+        notifications_provider=notifications,
         publish=lambda *args: None,
     )
 
 
 class TestAddBatch:
-    bus = bootstrap_test_app()
+    bus = bootstrap_test_app(notifications=FakeNotifications())
 
     def test_for_new_product(self):
         self.bus.handle(commands.CreateBatch("b1", "CRUNCHY-ARMCHAIR", 100, None))
@@ -71,7 +79,7 @@ class TestAddBatch:
 
 
 class TestChangeBatchQuantity:
-    bus = bootstrap_test_app()
+    bus = bootstrap_test_app(notifications=FakeNotifications())
 
     def test_changes_available_quantity(self):
         sku = "CRUNCHY-ARMCHAIR"
@@ -108,7 +116,8 @@ class TestChangeBatchQuantity:
 
 
 class TestAllocate:
-    bus = bootstrap_test_app()
+    fake_notifs = FakeNotifications()
+    bus = bootstrap_test_app(notifications=fake_notifs)
 
     def test_allocate_returns_allocation(self):
         self.bus.handle(commands.CreateBatch("b1", "COMPLICATED-LAMP", 100, None))
@@ -130,10 +139,6 @@ class TestAllocate:
     def test_sends_email_on_out_of_stock_error(self):
         sku = "POPULAR-CURTAINS"
         self.bus.handle(commands.CreateBatch("b1", sku, 9, None))
+        self.bus.handle(commands.Allocate("o1", sku, 10))
 
-        with mock.patch("allocation.adapters.email.send") as mock_send_mail:
-            self.bus.handle(commands.Allocate("o1", sku, 10))
-            assert mock_send_mail.call_args == mock.call(
-                "stock@made.com",
-                f"Out of stock for {sku}",
-            )
+        assert self.fake_notifs.sent["stock@made.com"] == f"Out of stock for {sku}"
